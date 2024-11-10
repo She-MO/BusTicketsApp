@@ -1,0 +1,30 @@
+﻿using BusTicketsApp.Server.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace BusTicketsApp.Server.Buses;
+
+[MutationType]
+public static class BusMutations
+{
+    [Error<IncorrectNumberOfSeatsException>]
+    [Error<BusNumberAlreadyInUseException>]
+    public static async Task<Bus> AddBusAsync(
+        AddBusInput input,
+        ApplicationDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        if (input.NumberOfSeats < 1)
+        {
+            throw new IncorrectNumberOfSeatsException();
+        }
+        var bus = await dbContext.Buses.FirstOrDefaultAsync(b => b.BusNumber == input.BusNumber, cancellationToken);
+        if (bus is not null)
+        {
+            throw new BusNumberAlreadyInUseException();
+        }
+        bus = new Bus { BusNumber = input.BusNumber, NumberOfSeats = input.NumberOfSeats, CarrierId = input.CarrierId };
+        dbContext.Add(bus);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return bus;
+    }
+}
