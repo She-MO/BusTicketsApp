@@ -6,17 +6,12 @@ namespace BusTicketsApp.Server.Cities;
 [MutationType]
 public static class CityMutations
 {
-    [Error<CityNameEmptyException>]
     [Error<CityNameAlreadyInUseException>]
     public static async Task<City> AddCityAsync(
         AddCityInput input,
         ApplicationDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        if (String.IsNullOrEmpty(input.Name))
-        {
-            throw new CityNameEmptyException();
-        }
         var city = await dbContext.Cities.FirstOrDefaultAsync(c => c.Name == input.Name, cancellationToken);
         if (city is not null)
         {

@@ -11,7 +11,6 @@ public static class PassengerMutations
 
     //[Authorize]
     [Error<UserIdEmptyException>]
-    [Error<PassengerNameEmptyException>]
     [Error<MaxNumberOfPassengersReachedException>]
     public static async Task<Passenger> AddPassengerAsync(
         AddPassengerInput input,
@@ -19,10 +18,6 @@ public static class PassengerMutations
         ApplicationDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        if (String.IsNullOrEmpty(input.FirstName) || String.IsNullOrEmpty(input.LastName))
-        {
-            throw new PassengerNameEmptyException();
-        }
         var userId = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
         if (String.IsNullOrEmpty(userId))
         {
@@ -33,13 +28,12 @@ public static class PassengerMutations
         {
             throw new MaxNumberOfPassengersReachedException();
         }
-        var passenger = new Passenger {  FirstName = input.FirstName, LastName = input.LastName, DateOfBirth = input.BirthDate, UserId = int.Parse(userId) };
+        var passenger = new Passenger {  FirstName = input.FirstName, LastName = input.LastName, DateOfBirth = input.DateOfBirth, UserId = int.Parse(userId) };
         dbContext.Passengers.Add(passenger);
         await dbContext.SaveChangesAsync(cancellationToken);
         return passenger;
     }
     
-    [Error<PassengerNameEmptyException>]
     [Error<PassengerNotFoundException>]
     public static async Task<Passenger> DeletePassengerAsync(
         DeletePassengerInput input,
