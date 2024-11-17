@@ -1,0 +1,203 @@
+﻿@page "/carriers"
+@using System.ComponentModel.DataAnnotations
+@using BusTicketsApp.Client
+@using Client.Models
+@inject BusTicketsAppClient _BusTicketsClient;
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+<EditForm Model="@Input" OnValidSubmit="AddOrRenameCarrier">
+    <DataAnnotationsValidator/>
+    <MudGrid>
+        <MudItem xs="12" sm="12">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="First name" HelperText="Max. 20 characters"
+                                  @bind-Value="Input.Name" For="@(() => Input.Name)"/>
+                </MudCardContent>
+                <MudCardActions>
+                    @if (CurrentCarrier is not null)
+                    {
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
+                    }
+                    else
+                    {
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+                    }
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+<MudDataGrid @ref="dataGrid" T="Carrier" ServerData="ReloadData" Filterable="false">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Carriers</MudText>
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.Name"/>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudStack Row>
+                    @if (context.Item.Id == CurrentCarrier)
+                    {
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCarrier(null, null)">Deselect</MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCarrier(context.Item.Id, context.Item.Name)">Rename</MudButton>
+                    }
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Carrier"/>
+    </PagerContent>
+</MudDataGrid>
+@code
+{
+    public MudDataGrid<Carrier> dataGrid;
+    public string? CurrentCarrier;
+    public bool success;
+    public string? error;
+    private string? EndCursor;
+    private string? StartCursor;
+    private int curPage = 0;
+    public CarrierInput Input = new();
+    public string? SearchString = null;
+    protected async Task<GridData<Carrier>> ReloadData(GridState<Carrier> state)
+    {
+        int? first = null;
+        int? last = null;
+        string? before = null;
+        string? after = null;
+        if (curPage < state.Page)
+        {
+            first = state.PageSize;
+            after = EndCursor;
+        } else if (curPage > state.Page && state.Page == 0 || curPage == state.Page)
+        {
+            first = state.PageSize;
+        }
+        else
+        {
+            before = StartCursor;
+            first = null;
+            last = state.PageSize;
+        }
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        var sortInput = new List<CarrierSortInput>();
+        if (sortDefinition is null || !sortDefinition.Descending)
+        {
+            sortInput.Add(new CarrierSortInput()
+            {
+                Name = SortEnumType.Asc
+            });
+        }
+        else
+        {
+            sortInput.Add(new CarrierSortInput()
+            {
+                Name = SortEnumType.Desc
+            });
+        }
+
+        CarrierFilterInput? carrierFilterInput = null;
+        if (!String.IsNullOrEmpty(SearchString))
+        {
+            carrierFilterInput = new CarrierFilterInput()
+            {
+                Name = new StringOperationFilterInput()
+                {
+                    Contains = SearchString
+                }
+            };
+        }
+        var results = await _BusTicketsClient.GetCarriers.ExecuteAsync(first, after, last, before, carrierFilterInput, sortInput);
+        if (results.Data is null)
+        {
+            error = results.Errors[0].Message;
+        }
+        var carriers = results.Data?.Carriers?.Edges?.Select(
+            e => new Carrier
+            {
+                Id = e.Node.Id,
+                Name = e.Node.Name
+            }
+            ).ToArray();
+        EndCursor = results.Data?.Carriers?.PageInfo.EndCursor;
+        StartCursor = results.Data?.Carriers?.PageInfo.StartCursor;
+        ChooseCarrier(null, null);
+        return new GridData<Carrier>()
+        {
+            TotalItems = results.Data?.Carriers?.TotalCount ?? 0,
+            Items = carriers ?? Enumerable.Empty<Carrier>()
+        };
+    }
+
+    public void ChooseCarrier(string? id, string? name)
+    {
+        CurrentCarrier = id;
+        Input.Name = name;
+    }
+
+    private Task OnSearch(string text)
+    {
+        SearchString = text;
+        return dataGrid.ReloadServerData();
+    }
+
+
+    //public async Task/*<GridData<Carrier>>*/ ReloadData(GridState<Carrier> state)
+    //{
+    //    var results = await _BusTicketsClient.GetCarriers.ExecuteAsync(10, null, null, null, null, new List<CarrierSortInput>()
+    //    {
+    //        new CarrierSortInput()
+    //        {
+    //            Name = SortEnumType.Asc
+    //        }
+    //    });
+    //    if (results.Data is null)
+    //    {
+    //        error = results.Errors[0].Message;
+    //        return;
+    //    }
+    //    var newCarriers = results.Data.Carriers?.Edges?
+    //        .Select(e => new Carrier
+    //        {
+    //            Id = e.Node.Id,
+    //            Name = e.Node.Name
+    //        }).ToList(); 
+    //    //CarriersList = CarriersList!.Concat(newCarriers ?? new List<Carrier>() ).ToList();
+    //    EndCursor = results.Data.Carriers?.PageInfo.EndCursor;
+    //    StartCursor = results.Data.Carriers?.PageInfo.StartCursor;
+    //}
+
+    private async Task AddOrRenameCarrier()
+    {
+        if (CurrentCarrier is not null)
+        {
+            var result = await _BusTicketsClient.RenameCarrier.ExecuteAsync(CurrentCarrier, Input.Name);
+            Input.Name = null;
+            CurrentCarrier = null;
+            await dataGrid.ReloadServerData();
+        }
+        else
+        {
+            var result = await _BusTicketsClient.AddCarrier.ExecuteAsync(Input.Name);
+            Input.Name = null;
+            await dataGrid.ReloadServerData();
+        }
+    }
+
+    public record CarrierInput
+    {
+        [Required]
+        [Length(3, 20)]
+        public string? Name { get; set; }
+    }
+}

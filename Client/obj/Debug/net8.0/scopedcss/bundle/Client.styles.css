@@ -1,4 +1,4 @@
-/* /Layout/MainLayout.razor.rz.scp.css */
+/* _content/Client/Layout/MainLayout.razor.rz.scp.css */
 .page[b-tmopy668it] {
     position: relative;
     display: flex;
@@ -76,7 +76,7 @@ main[b-tmopy668it] {
         padding-right: 1.5rem !important;
     }
 }
-/* /Layout/NavMenu.razor.rz.scp.css */
+/* _content/Client/Layout/NavMenu.razor.rz.scp.css */
 .navbar-toggler[b-9qkkwgv1yd] {
     background-color: rgba(255, 255, 255, 0.1);
 }

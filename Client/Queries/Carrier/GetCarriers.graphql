@@ -1,0 +1,24 @@
+﻿query GetCarriers($first: Int, $after: String, $last: Int, $before: String, $where: CarrierFilterInput, $order: [CarrierSortInput!]) {
+    carriers(
+        first: $first
+        last: $last
+        before: $before
+        after: $after
+        order: $order
+        where: $where
+    ) {
+        edges {
+            node {
+                id
+                name
+            }
+        }
+        pageInfo {
+            startCursor
+            endCursor
+            hasPreviousPage
+            hasNextPage
+        }
+        totalCount
+    }
+}

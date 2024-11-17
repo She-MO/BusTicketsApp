@@ -1,0 +1,15 @@
+﻿mutation AddCarrier($name: String!) {
+    addCarrier(input: {
+        name: $name
+    }) {
+        carrier {
+            id
+            name
+        }
+        errors {
+            ... on CarrierNameAlreadyInUseError {
+                message
+            }
+        }
+    }
+}

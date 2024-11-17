@@ -1,0 +1,16 @@
+﻿mutation RenameCarrier($id: ID!, $name: String!) {
+    renameCarrier(input: {
+        id: $id
+        name: $name
+    }) {
+        carrier {
+            id
+            name
+        }
+        errors {
+            ... on CarrierNotFoundError {
+                message
+            }
+        }
+    }
+}

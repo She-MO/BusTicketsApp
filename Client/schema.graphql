@@ -1,0 +1,488 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type User implements Node {
+  passengers: [Passenger!]
+  id: ID!
+  email: String!
+  password: String!
+  phone: String
+  role: Roles!
+}
+
+input UserFilterInput {
+  and: [UserFilterInput!]
+  or: [UserFilterInput!]
+  id: IntOperationFilterInput
+  email: StringOperationFilterInput
+  password: StringOperationFilterInput
+  phone: StringOperationFilterInput
+  role: RolesOperationFilterInput
+  passengers: ListFilterInputTypeOfPassengerFilterInput
+}
+
+"A connection to a list of items."
+type UsersConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [UsersEdge!]
+  "A flattened list of the nodes."
+  nodes: [User!]
+}
+
+type UserIdEmptyError implements Error {
+  message: String!
+}
+
+"A connection to a list of items."
+type CarriersConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [CarriersEdge!]
+  "A flattened list of the nodes."
+  nodes: [Carrier!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int!
+}
+
+input DateOperationFilterInput {
+  eq: Date
+  neq: Date
+  in: [Date]
+  nin: [Date]
+  gt: Date
+  ngt: Date
+  gte: Date
+  ngte: Date
+  lt: Date
+  nlt: Date
+  lte: Date
+  nlte: Date
+}
+
+input CarrierFilterInput {
+  and: [CarrierFilterInput!]
+  or: [CarrierFilterInput!]
+  id: IntOperationFilterInput
+  name: StringOperationFilterInput
+  buses: ListFilterInputTypeOfBusFilterInput
+}
+
+input StringOperationFilterInput {
+  and: [StringOperationFilterInput!]
+  or: [StringOperationFilterInput!]
+  eq: String
+  neq: String
+  contains: String
+  ncontains: String
+  in: [String]
+  nin: [String]
+  startsWith: String
+  nstartsWith: String
+  endsWith: String
+  nendsWith: String
+}
+
+input RegisterUserInput {
+  email: String!
+  password: String!
+  phone: String!
+}
+
+type AddCityPayload {
+  city: City
+  errors: [AddCityError!]
+}
+
+input PassengerFilterInput {
+  and: [PassengerFilterInput!]
+  or: [PassengerFilterInput!]
+  id: IntOperationFilterInput
+  firstName: StringOperationFilterInput
+  lastName: StringOperationFilterInput
+  dateOfBirth: DateOperationFilterInput
+  userId: IntOperationFilterInput
+  user: UserFilterInput
+}
+
+"A connection to a list of items."
+type CitiesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [CitiesEdge!]
+  "A flattened list of the nodes."
+  nodes: [City!]
+}
+
+type InvalidEmailOrPasswordError implements Error {
+  message: String!
+}
+
+input ListFilterInputTypeOfBusFilterInput {
+  all: BusFilterInput
+  none: BusFilterInput
+  some: BusFilterInput
+  any: Boolean
+}
+
+input CarrierSortInput {
+  id: SortEnumType
+  name: SortEnumType
+}
+
+input CityFilterInput {
+  and: [CityFilterInput!]
+  or: [CityFilterInput!]
+  id: IntOperationFilterInput
+  name: StringOperationFilterInput
+}
+
+"The node interface is implemented by entities that have a global unique identifier."
+interface Node {
+  id: ID!
+}
+
+union RenameCityError = CityNotFoundError
+
+input RenameCityInput {
+  id: ID!
+  name: String!
+}
+
+union RenameCarrierError = CarrierNotFoundError
+
+type City {
+  id: Int!
+  name: String!
+}
+
+"An edge in a connection."
+type BusesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Bus!
+}
+
+input BusFilterInput {
+  and: [BusFilterInput!]
+  or: [BusFilterInput!]
+  id: IntOperationFilterInput
+  numberOfSeats: IntOperationFilterInput
+  busNumber: StringOperationFilterInput
+  carrierId: IntOperationFilterInput
+  carrier: CarrierFilterInput
+}
+
+type Query {
+  "Fetches an object given its ID."
+  node("ID of the object." id: ID!): Node
+  "Lookup nodes by a list of IDs."
+  nodes("The list of node IDs." ids: [ID!]!): [Node]!
+  buses("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: BusFilterInput order: [BusSortInput!]): BusesConnection
+  busById(id: ID!): Bus
+  busesById(ids: [ID!]!): [Bus!]!
+  carriers("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: CarrierFilterInput order: [CarrierSortInput!]): CarriersConnection
+  carrierById(id: ID!): Carrier
+  carriersById(ids: [ID!]!): [Carrier!]!
+  cities("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: CityFilterInput order: [CitySortInput!]): CitiesConnection
+  cityById(id: Int!): City
+  citiesById(ids: [ID!]!): [City!]!
+  users("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: UserFilterInput order: [UserSortInput!]): UsersConnection
+  userById(id: ID!): User
+  usersById(ids: [ID!]!): [User!]!
+}
+
+type EmailAlreadyInUseError implements Error {
+  message: String!
+}
+
+input UserSortInput {
+  id: SortEnumType
+  email: SortEnumType
+  password: SortEnumType
+  phone: SortEnumType
+  role: SortEnumType
+}
+
+type CarrierNameAlreadyInUseError implements Error {
+  message: String!
+}
+
+type PassengerNotFoundError implements Error {
+  message: String!
+}
+
+input AddCityInput {
+  name: String!
+}
+
+union AddCarrierError = CarrierNameAlreadyInUseError
+
+union AddBusError = IncorrectNumberOfSeatsError | BusNumberAlreadyInUseError
+
+type BusNumberAlreadyInUseError implements Error {
+  message: String!
+}
+
+input LogInUserInput {
+  email: String!
+  password: String!
+}
+
+type AddBusPayload {
+  bus: Bus
+  errors: [AddBusError!]
+}
+
+"An edge in a connection."
+type UsersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: User!
+}
+
+"Defines when a policy shall be executed."
+enum ApplyPolicy {
+  "Before the resolver was executed."
+  BEFORE_RESOLVER
+  "After the resolver was executed."
+  AFTER_RESOLVER
+  "The policy is applied in the validation step before the execution."
+  VALIDATION
+}
+
+"An edge in a connection."
+type CarriersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Carrier!
+}
+
+input RolesOperationFilterInput {
+  eq: Roles
+  neq: Roles
+  in: [Roles!]
+  nin: [Roles!]
+}
+
+type RenameCarrierPayload {
+  carrier: Carrier
+  errors: [RenameCarrierError!]
+}
+
+type Passenger {
+  user: User
+  id: Int!
+  firstName: String!
+  lastName: String!
+  dateOfBirth: Date!
+  userId: Int!
+}
+
+input AddCarrierInput {
+  name: String!
+}
+
+enum SortEnumType {
+  ASC
+  DESC
+}
+
+"The `Date` scalar represents an ISO-8601 compliant date type."
+scalar Date
+
+type AddPassengerPayload {
+  passenger: Passenger
+  errors: [AddPassengerError!]
+}
+
+type LogInUserPayload {
+  string: String
+  errors: [LogInUserError!]
+}
+
+type MaxNumberOfPassengersReachedError implements Error {
+  message: String!
+}
+
+enum Roles {
+  USER
+  MANAGER
+  ADMIN
+}
+
+type CityNameAlreadyInUseError implements Error {
+  message: String!
+}
+
+type RenameCityPayload {
+  city: City
+  errors: [RenameCityError!]
+}
+
+union AddPassengerError = UserIdEmptyError | MaxNumberOfPassengersReachedError
+
+type DeletePassengerPayload {
+  passenger: Passenger
+  errors: [DeletePassengerError!]
+}
+
+type Mutation {
+  addBus(input: AddBusInput!): AddBusPayload!
+  addCarrier(input: AddCarrierInput!): AddCarrierPayload!
+  renameCarrier(input: RenameCarrierInput!): RenameCarrierPayload!
+  addCity(input: AddCityInput!): AddCityPayload!
+  renameCity(input: RenameCityInput!): RenameCityPayload!
+  addPassenger(input: AddPassengerInput!): AddPassengerPayload!
+  deletePassenger(input: DeletePassengerInput!): DeletePassengerPayload!
+  registerUser(input: RegisterUserInput!): RegisterUserPayload!
+  logInUser(input: LogInUserInput!): LogInUserPayload!
+}
+
+type CityNotFoundError implements Error {
+  message: String!
+}
+
+input CitySortInput {
+  id: SortEnumType
+  name: SortEnumType
+}
+
+union AddCityError = CityNameAlreadyInUseError
+
+type Bus implements Node {
+  carrier: Carrier
+  id: ID!
+  numberOfSeats: Int!
+  busNumber: String!
+  carrierId: Int!
+}
+
+input RenameCarrierInput {
+  id: ID!
+  name: String!
+}
+
+union RegisterUserError = EmailAlreadyInUseError
+
+interface Error {
+  message: String!
+}
+
+input ListFilterInputTypeOfPassengerFilterInput {
+  all: PassengerFilterInput
+  none: PassengerFilterInput
+  some: PassengerFilterInput
+  any: Boolean
+}
+
+input AddBusInput {
+  busNumber: String!
+  numberOfSeats: Int!
+  carrierId: ID!
+}
+
+input IntOperationFilterInput {
+  eq: Int
+  neq: Int
+  in: [Int]
+  nin: [Int]
+  gt: Int
+  ngt: Int
+  gte: Int
+  ngte: Int
+  lt: Int
+  nlt: Int
+  lte: Int
+  nlte: Int
+}
+
+type IncorrectNumberOfSeatsError implements Error {
+  message: String!
+}
+
+type Carrier implements Node {
+  buses("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String): BusesConnection
+  id: ID!
+  name: String!
+}
+
+type CarrierNotFoundError implements Error {
+  message: String!
+}
+
+type RegisterUserPayload {
+  string: String
+  errors: [RegisterUserError!]
+}
+
+"A connection to a list of items."
+type BusesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [BusesEdge!]
+  "A flattened list of the nodes."
+  nodes: [Bus!]
+}
+
+union LogInUserError = InvalidEmailOrPasswordError
+
+input DeletePassengerInput {
+  id: ID!
+}
+
+"An edge in a connection."
+type CitiesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: City!
+}
+
+input AddPassengerInput {
+  firstName: String!
+  lastName: String!
+  dateOfBirth: Date!
+}
+
+input BusSortInput {
+  id: SortEnumType
+  numberOfSeats: SortEnumType
+  busNumber: SortEnumType
+  carrierId: SortEnumType
+  carrier: CarrierSortInput
+}
+
+type AddCarrierPayload {
+  carrier: Carrier
+  errors: [AddCarrierError!]
+}
+
+union DeletePassengerError = PassengerNotFoundError
+
+"Information about pagination in a connection."
+type PageInfo {
+  "Indicates whether more edges exist following the set defined by the clients arguments."
+  hasNextPage: Boolean!
+  "Indicates whether more edges exist prior the set defined by the clients arguments."
+  hasPreviousPage: Boolean!
+  "When paginating backwards, the cursor to continue."
+  startCursor: String
+  "When paginating forwards, the cursor to continue."
+  endCursor: String
+}
+
+"The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response."
+directive @cost("The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc." weight: String!) on SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM | INPUT_FIELD_DEFINITION
+
+"The purpose of the `@listSize` directive is to either inform the static analysis about the size of returned lists (if that information is statically available), or to point the analysis to where to find that information."
+directive @listSize("The `assumedSize` argument can be used to statically define the maximum length of a list returned by a field." assumedSize: Int "The `slicingArguments` argument can be used to define which of the field's arguments with numeric type are slicing arguments, so that their value determines the size of the list returned by that field. It may specify a list of multiple slicing arguments." slicingArguments: [String!] "The `sizedFields` argument can be used to define that the value of the `assumedSize` argument or of a slicing argument does not affect the size of a list returned by a field itself, but that of a list returned by one of its sub-fields." sizedFields: [String!] "The `requireOneSlicingArgument` argument can be used to inform the static analysis that it should expect that exactly one of the defined slicing arguments is present in a query. If that is not the case (i.e., if none or multiple slicing arguments are present), the static analysis may throw an error." requireOneSlicingArgument: Boolean! = true) on FIELD_DEFINITION
