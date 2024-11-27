@@ -13,9 +13,10 @@ public static class CityQueries
     [UseSorting]
     public static IQueryable<City> GetCities(ApplicationDbContext dbContext)
     {
-        return dbContext.Cities.AsNoTracking().OrderBy(c => c.Name).ThenBy(c => c.Id);
+        return dbContext.Cities.AsNoTracking();
     }
 
+    [NodeResolver]
     public static async Task<City?> GetCityByIdAsync(
         int id,
         ICityByIdDataLoader cityById,

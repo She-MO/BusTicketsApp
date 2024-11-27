@@ -13,7 +13,7 @@ public static class CarrierQueries
     [UseSorting]
     public static IQueryable<Carrier> GetCarriers(ApplicationDbContext dbContext)
     {
-        return dbContext.Carriers.AsNoTracking().OrderBy(c => c.Name);
+        return dbContext.Carriers.AsNoTracking();
     }
 
     [NodeResolver]

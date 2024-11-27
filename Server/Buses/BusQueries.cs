@@ -9,15 +9,12 @@ namespace BusTicketsApp.Server.Buses;
 [QueryType]
 public static class BusQueries
 {
-    //[Authorize]
     [UsePaging]
     [UseFiltering]
     [UseSorting]
     public static IQueryable<Bus> GetBuses(ApplicationDbContext dbContext)
     {
-        return dbContext.Buses
-            .AsNoTracking()
-            .OrderBy(b => b.Id);
+        return dbContext.Buses.AsNoTracking();
     }
 
     [NodeResolver]
