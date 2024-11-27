@@ -1,6 +1,7 @@
 using System.Text;
 using BusTicketsApp.Server.Auth;
 using BusTicketsApp.Server.Data;
+using BusTicketsApp.Server.Filtering;
 using DataAnnotatedModelValidations;
 //using BusTicketsApp.Server.Users.UserInputValidators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -50,7 +51,20 @@ builder.Services.AddSingleton<TokenProvider>()
     .AddSorting()
     .AddServerTypes()
     .AddAuthorization()
-    .AddDataAnnotationsValidator();
+    .AddDataAnnotationsValidator()
+    .ModifyCostOptions(options =>
+    {
+        options.MaxFieldCost = 10_000;
+        options.MaxTypeCost = 10_000;
+        options.EnforceCostLimits = true;
+        options.ApplyCostDefaults = true;
+        options.DefaultResolverCost = 10.0;
+    })
+    .ModifyPagingOptions(options =>
+    {
+        options.IncludeTotalCount = true;
+        options.MaxPageSize = 100;
+    });
 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddHttpContextAccessor();
