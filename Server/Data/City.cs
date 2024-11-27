@@ -2,7 +2,7 @@
 
 namespace BusTicketsApp.Server.Data;
 
-public class City
+public sealed class City
 {
     public int Id { get; init; }
     [StringLength(50)] 

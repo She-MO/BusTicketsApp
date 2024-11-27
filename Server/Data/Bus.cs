@@ -2,7 +2,7 @@
 
 namespace BusTicketsApp.Server.Data;
 
-public class Bus
+public sealed class Bus
 {
     public int Id { get; init; }
     public required int NumberOfSeats { get; set; }

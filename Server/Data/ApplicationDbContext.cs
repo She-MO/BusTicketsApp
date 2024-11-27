@@ -10,6 +10,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<City> Cities { get; init; }
     public DbSet<Route> Routes { get; init; }
     public DbSet<RouteStop> RouteStops { get; init; }
+    public DbSet<Timetable> Timetables { get; init; }
+    public DbSet<Trip> Trips { get; init; }
+    public DbSet<TripSeats> TripSeats { get; init; }
+    public DbSet<Ticket> Tickets { get; init; }
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,6 +25,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasConversion(
                 r => r.ToString(),
                 r => (Roles)Enum.Parse(typeof(Roles), r));
+        modelBuilder
+            .Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
         
         
         //carrier entity
@@ -41,6 +50,30 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .Entity<City>()
             .HasIndex(c => c.Name)
             .IsUnique();
+        
+        
+        //RouteStop entity
+        modelBuilder
+            .Entity<RouteStop>()
+            .HasKey(rs => new { rs.RouteId, rs.Sequence });
+        modelBuilder
+            .Entity<RouteStop>()
+            .HasMany(rs => rs.TripSeats)
+            .WithOne(ts => ts.RouteStop)
+            .HasForeignKey(rs => new { rs.RouteId, rs.Sequence });
+        
+        //TripSeats entity
+        modelBuilder
+            .Entity<TripSeats>()
+            .HasKey(ts => new { ts.TripId, ts.RouteId, ts.Sequence });
+
+        //Timetable entity
+        modelBuilder
+            .Entity<Timetable>()
+            .Property(t => t.DayOfWeek)
+            .HasConversion(
+                day => day.ToString(),
+                stringDay => (DayOfWeek)Enum.Parse<DayOfWeek>(stringDay));
     }
 
 }
