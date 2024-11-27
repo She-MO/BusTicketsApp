@@ -1,0 +1,29 @@
+query GetBuses($first: Int, $after: String, $last: Int, $before: String, $where: BusFilterInput, $order: [BusSortInput!]) {
+    buses(
+        first: $first
+        last: $last
+        before: $before
+        after: $after
+        order: $order
+        where: $where
+    ) {
+        edges {
+            node {
+                id
+                busNumber
+                numberOfSeats
+                carrier {
+                    id
+                    name
+                }
+            }
+        }
+        pageInfo {
+            startCursor
+            endCursor
+            hasPreviousPage
+            hasNextPage
+        }
+        totalCount
+    }
+}

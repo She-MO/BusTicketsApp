@@ -1,0 +1,24 @@
+﻿query GetCities($first: Int, $after: String, $last: Int, $before: String, $where: CityFilterInput, $order: [CitySortInput!]) {
+    cities (
+        first: $first
+        last: $last
+        before: $before
+        after: $after
+        order: $order
+        where: $where
+    ) {
+        edges {
+            node {
+                id
+                name
+            }
+        }
+        pageInfo {
+            startCursor
+            endCursor
+            hasPreviousPage
+            hasNextPage
+        }
+        totalCount
+    }
+}
