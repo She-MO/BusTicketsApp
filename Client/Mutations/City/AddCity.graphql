@@ -1,0 +1,15 @@
+﻿mutation AddCity($name: String!) {
+    addCity(input: {
+        name: $name
+    }) {
+        city {
+            id
+            name
+        }
+        errors {
+            ... on Error {
+                message
+            }
+        }
+    }
+}

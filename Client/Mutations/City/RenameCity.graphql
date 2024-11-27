@@ -1,0 +1,16 @@
+﻿mutation RenameCity($id: ID!, $name: String!) {
+    renameCity(input: {
+        id: $id
+        name: $name
+    }) {
+        city {
+            id
+            name
+        }
+        errors {
+            ... on Error {
+                message
+            }
+        }
+    }
+}
