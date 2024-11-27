@@ -1,0 +1,22 @@
+mutation AddBus($busNumber: String!, $numberOfSeats: Int!, $carrierId: ID!) {
+    addBus(input: {
+        busNumber: $busNumber
+        numberOfSeats: $numberOfSeats
+        carrierId: $carrierId
+    }) {
+        bus {
+            id
+            busNumber
+            numberOfSeats
+            carrier {
+                id
+                name
+            }
+        }
+        errors {
+            ... on BusNumberAlreadyInUseError {
+                message
+            }
+        }
+    }
+}
