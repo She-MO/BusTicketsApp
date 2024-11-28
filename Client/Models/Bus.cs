@@ -8,6 +8,6 @@ public class Bus
     public required int NumberOfSeats { get; set; }
     [StringLength(20)]
     public required string BusNumber { get; set; }
-    public required int CarrierId { get; init; }
+    public string? CarrierId { get; init; }
     public Carrier? Carrier { get; init; }
 }

@@ -1,0 +1,203 @@
+﻿@page "/cities"
+@using System.ComponentModel.DataAnnotations
+@using BusTicketsApp.Client
+@using Client.Models
+@inject BusTicketsAppClient _BusTicketsClient;
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+<EditForm Model="@Input" OnValidSubmit="AddOrRenameCity">
+    <DataAnnotationsValidator/>
+    <MudGrid>
+        <MudItem xs="12" sm="12">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="First name" HelperText="Max. 20 characters"
+                                  @bind-Value="Input.Name" For="@(() => Input.Name)"/>
+                </MudCardContent>
+                <MudCardActions>
+                    @if (CurrentCity is not null)
+                    {
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
+                    }
+                    else
+                    {
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+                    }
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+<MudDataGrid @ref="dataGrid" T="City" ServerData="ReloadData" Filterable="false">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Cities</MudText>
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.Name"/>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudStack Row>
+                    @if (context.Item.Id == CurrentCity)
+                    {
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCity(null, null)">Deselect</MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCity(context.Item.Id, context.Item.Name)">Rename</MudButton>
+                    }
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="City"/>
+    </PagerContent>
+</MudDataGrid>
+@code
+{
+    public MudDataGrid<City> dataGrid;
+    public string? CurrentCity;
+    public bool success;
+    public string? error;
+    private string? EndCursor;
+    private string? StartCursor;
+    private int curPage = 0;
+    public CityInput Input = new();
+    public string? SearchString = null;
+    protected async Task<GridData<City>> ReloadData(GridState<City> state)
+    {
+        int? first = null;
+        int? last = null;
+        string? before = null;
+        string? after = null;
+        if (curPage < state.Page)
+        {
+            first = state.PageSize;
+            after = EndCursor;
+        } else if (curPage > state.Page && state.Page == 0 || curPage == state.Page)
+        {
+            first = state.PageSize;
+        }
+        else
+        {
+            before = StartCursor;
+            first = null;
+            last = state.PageSize;
+        }
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        var sortInput = new List<CitySortInput>();
+        if (sortDefinition is null || !sortDefinition.Descending)
+        {
+            sortInput.Add(new CitySortInput()
+            {
+                Name = SortEnumType.Asc
+            });
+        }
+        else
+        {
+            sortInput.Add(new CitySortInput()
+            {
+                Name = SortEnumType.Desc
+            });
+        }
+
+        CityFilterInput? cityFilterInput = null;
+        if (!String.IsNullOrEmpty(SearchString))
+        {
+            cityFilterInput = new CityFilterInput()
+            {
+                Name = new StringOperationFilterInput()
+                {
+                    Contains = SearchString
+                }
+            };
+        }
+        var results = await _BusTicketsClient.GetCities.ExecuteAsync(first, after, last, before, cityFilterInput, sortInput);
+        if (results.Data is null)
+        {
+            error = results.Errors[0].Message;
+        }
+        var cities = results.Data?.Cities?.Edges?.Select(
+            e => new City
+            {
+                Id = e.Node.Id,
+                Name = e.Node.Name
+            }
+            ).ToArray();
+        EndCursor = results.Data?.Cities?.PageInfo.EndCursor;
+        StartCursor = results.Data?.Cities?.PageInfo.StartCursor;
+        ChooseCity(null, null);
+        return new GridData<City>()
+        {
+            TotalItems = results.Data?.Cities?.TotalCount ?? 0,
+            Items = cities ?? Enumerable.Empty<City>()
+        };
+    }
+
+    public void ChooseCity(string? id, string? name)
+    {
+        CurrentCity = id;
+        Input.Name = name;
+    }
+
+    private Task OnSearch(string text)
+    {
+        SearchString = text;
+        return dataGrid.ReloadServerData();
+    }
+
+
+    //public async Task/*<GridData<City>>*/ ReloadData(GridState<City> state)
+    //{
+    //    var results = await _BusTicketsClient.GetCities.ExecuteAsync(10, null, null, null, null, new List<CitySortInput>()
+    //    {
+    //        new CitySortInput()
+    //        {
+    //            Name = SortEnumType.Asc
+    //        }
+    //    });
+    //    if (results.Data is null)
+    //    {
+    //        error = results.Errors[0].Message;
+    //        return;
+    //    }
+    //    var newCities = results.Data.Cities?.Edges?
+    //        .Select(e => new City
+    //        {
+    //            Id = e.Node.Id,
+    //            Name = e.Node.Name
+    //        }).ToList(); 
+    //    //CitiesList = CitiesList!.Concat(newCities ?? new List<City>() ).ToList();
+    //    EndCursor = results.Data.Cities?.PageInfo.EndCursor;
+    //    StartCursor = results.Data.Cities?.PageInfo.StartCursor;
+    //}
+
+    private async Task AddOrRenameCity()
+    {
+        if (CurrentCity is not null)
+        {
+            var result = await _BusTicketsClient.RenameCity.ExecuteAsync(CurrentCity, Input.Name);
+            Input.Name = null;
+            CurrentCity = null;
+            await dataGrid.ReloadServerData();
+        }
+        else
+        {
+            var result = await _BusTicketsClient.AddCity.ExecuteAsync(Input.Name);
+            Input.Name = null;
+            await dataGrid.ReloadServerData();
+        }
+    }
+
+    public record CityInput
+    {
+        [Required]
+        [Length(3, 20)]
+        public string? Name { get; set; }
+    }
+}
