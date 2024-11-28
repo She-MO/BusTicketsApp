@@ -4,7 +4,7 @@ namespace Client.Models;
 
 public class User
 {
-    public int Id { get; init; }
+    public string Id { get; init; }
     [StringLength(100)]
     [EmailAddress]
     public required string Email { get; set; } 

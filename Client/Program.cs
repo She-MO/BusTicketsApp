@@ -1,4 +1,5 @@
 using Client.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,12 @@ builder.Services.AddBusTicketsAppClient()
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+//builder.Services.AddAuthentication();
+//builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<CustomAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp 
+    => sp.GetRequiredService<CustomAuthenticationStateProvider>());
 
 var app = builder.Build();
 

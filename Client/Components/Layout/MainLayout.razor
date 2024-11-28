@@ -1,4 +1,8 @@
-﻿@inherits LayoutComponentBase
+﻿@using Client.Auth
+@using Client.Components.Dialogs
+@inherits LayoutComponentBase
+@inject CustomAuthenticationStateProvider _AuthenticationStateProvider
+@inject IDialogService _DialogService
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
@@ -11,6 +15,19 @@
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+        <AuthorizeView>
+            <NotAuthorized>
+                <MudButton @onclick="OpenRegisterDialogAsync" Variant="Variant.Filled" Color="Color.Primary">
+                    Register
+                </MudButton>
+                <MudButton @onclick="OpenSignInDialogAsync" Variant="Variant.Filled" Color="Color.Primary">
+                    Sign in
+                </MudButton>
+            </NotAuthorized>
+            <Authorized>
+                you are authorized
+            </Authorized>
+        </AuthorizeView>
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
@@ -28,6 +45,8 @@
 </div>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authState { get; set; }
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
@@ -99,6 +118,18 @@
         true => Icons.Material.Rounded.AutoMode,
         false => Icons.Material.Outlined.DarkMode,
     };
+    private Task OpenRegisterDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true};
+
+        return _DialogService.ShowAsync<RegisterDialog>("Register Dialog", options);
+    }
+    private Task OpenSignInDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true};
+
+        return _DialogService.ShowAsync<SignInDialog>("Sign in Dialog", options);
+    }
 }
 
 

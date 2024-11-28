@@ -1,0 +1,69 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using Client.Auth
+@inject BusTicketsAppClient BusTicketsClient
+@inject CustomAuthenticationStateProvider _AuthenticationStateProvider
+<MudDialog>
+    <TitleContent>
+        Sign in
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator/>
+            <MudGrid>
+                <MudItem xs="12" sm="7">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudTextField Label="Email" Class="mt-3"
+                                          @bind-Value="model.Email" For="@(() => model.Email)"/>
+                            <MudTextField Label="Password" HelperText="Choose a strong password" Class="mt-3"
+                                          @bind-Value="model.Password" For="@(() => model.Password)" InputType="InputType.Password"/>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Sign in</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </EditForm> 
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+    RegisterAccountForm model = new RegisterAccountForm();
+
+    public class RegisterAccountForm
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        public string Password { get; set; }
+        
+
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        var result = await BusTicketsClient.SignInUser.ExecuteAsync(new LogInUserInput()
+        {
+            Email = model.Email,
+            Password = model.Password,
+        });
+        if (result.Data?.LogInUser.String is not null)
+        {
+            Submit();
+            await _AuthenticationStateProvider.LoginAsync(result.Data.LogInUser.String);
+            StateHasChanged();
+        }
+    }
+}

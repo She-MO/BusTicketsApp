@@ -1,0 +1,82 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using Client.Auth
+@inject BusTicketsAppClient BusTicketsClient
+@inject CustomAuthenticationStateProvider _AuthenticationStateProvider
+<MudDialog>
+    <TitleContent>
+        Register
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator/>
+            <MudGrid>
+                <MudItem xs="12" sm="7">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudTextField Label="Email" Class="mt-3"
+                                          @bind-Value="model.Email" For="@(() => model.Email)"/>
+                            <MudTextField Label="Phone" Class="mt-3"
+                                          @bind-Value="model.Phone" For="@(() => model.Phone)"/>
+                            <MudTextField Label="Password" HelperText="Choose a strong password" Class="mt-3"
+                                          @bind-Value="model.Password" For="@(() => model.Password)" InputType="InputType.Password"/>
+                            <MudTextField Label="Password" HelperText="Repeat the password" Class="mt-3"
+                                          @bind-Value="model.Password2" For="@(() => model.Password2)" InputType="InputType.Password"/>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </EditForm> 
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+    RegisterAccountForm model = new RegisterAccountForm();
+
+    public class RegisterAccountForm
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        [StringLength(30, ErrorMessage = "Password must be at least 8 characters long.", MinimumLength = 8)]
+        public string Password { get; set; }
+        
+        [Required]
+        [Phone]
+        public string Phone { get; set; }
+
+        [Required]
+        [Compare(nameof(Password))]
+        public string Password2 { get; set; }
+
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        var result = await BusTicketsClient.RegisterUser.ExecuteAsync(new RegisterUserInput()
+        {
+            Email = model.Email,
+            Password = model.Password,
+            Phone = model.Phone
+        });
+        if (result.Data?.RegisterUser.String is not null)
+        {
+            Submit();
+            await _AuthenticationStateProvider.LoginAsync(result.Data.RegisterUser.String);
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,10 @@
+﻿mutation SignInUser($newUser: LogInUserInput!){
+    logInUser(input: $newUser) {
+        string
+        errors {
+            ... on InvalidEmailOrPasswordError {
+                message
+            }
+        }
+    }
+}
