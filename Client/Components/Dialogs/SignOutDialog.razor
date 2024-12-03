@@ -1,0 +1,27 @@
+﻿@using Client.Auth
+@inject CustomAuthenticationStateProvider _AuthenticationStateProvider
+<MudDialog>
+    <TitleContent>
+         Sign out
+    </TitleContent>
+    <DialogContent>
+        Sign out from your account?
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Sign out</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    private async Task Submit()
+    {
+        await _AuthenticationStateProvider.LogOutAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+        StateHasChanged();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

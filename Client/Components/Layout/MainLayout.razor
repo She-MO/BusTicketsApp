@@ -25,7 +25,9 @@
                 </MudButton>
             </NotAuthorized>
             <Authorized>
-                you are authorized
+                <MudButton @onclick="OpenSignOutDialogAsync" Variant="Variant.Filled" Color="Color.Error" Style="margin-left: 50px">
+                    Sign out
+                </MudButton>
             </Authorized>
         </AuthorizeView>
     </MudAppBar>
@@ -129,6 +131,12 @@
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true};
 
         return _DialogService.ShowAsync<SignInDialog>("Sign in Dialog", options);
+    }
+    private Task OpenSignOutDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true};
+
+        return _DialogService.ShowAsync<SignOutDialog>("Sign out Dialog", options);
     }
 }
 
