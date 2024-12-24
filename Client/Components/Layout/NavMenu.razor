@@ -1,11 +1,25 @@
 ﻿
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="counter" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
-    <MudNavLink Href="weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Weather</MudNavLink>
-    <MudNavLink Href="carriers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Carriers</MudNavLink>
-    <MudNavLink Href="buses" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Buses</MudNavLink>
-    <MudNavLink Href="cities" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Cities</MudNavLink>
+    <MudNavLink Href="timetables" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Timetables</MudNavLink>
+    <MudNavLink Href="faq" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">FAQ</MudNavLink>
+    <MudNavLink Href="aboutus" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">About us</MudNavLink>
+    <AuthorizeView>
+        <Authorized>
+            <MudNavLink Href="carriers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">My tickets</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+    <AuthorizeView Policy="IsManagerOrAdmin">
+        <Authorized>
+            <MudNavLink Href="carriers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Carriers</MudNavLink>
+            <MudNavLink Href="buses" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Buses</MudNavLink>
+            <MudNavLink Href="cities" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Cities</MudNavLink>
+            <MudNavLink Href="routes" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Routes</MudNavLink>
+            <MudNavLink Href="statistics" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Statistics</MudNavLink>
+            <MudNavLink Href="trips" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Trips</MudNavLink>
+            
+        </Authorized>
+    </AuthorizeView>
 </MudNavMenu>
 
 

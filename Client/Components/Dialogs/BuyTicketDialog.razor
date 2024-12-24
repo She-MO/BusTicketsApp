@@ -1,4 +1,4 @@
-﻿@using Client.Components.Pages
+﻿@*@using Client.Components.Pages
 @using Client.Models
 @using Microsoft.AspNetCore.Authorization
 @inject ISnackbar Snackbar
@@ -7,9 +7,9 @@
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
-            @*
+            $1$
             <MudIcon Icon="@Icons.Material.Filled." Class="mr-3 mb-n1"/>
-            *@
+            #1#
             Buy ticket?
         </MudText>
     </TitleContent>
@@ -86,4 +86,4 @@
         MudDialog.Close();
     }
 
-}
+}*@

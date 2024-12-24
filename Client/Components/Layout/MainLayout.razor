@@ -11,13 +11,15 @@
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3">Bus tickets</MudText>
         <MudSpacer />
+        @*
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+        *@
         <AuthorizeView>
             <NotAuthorized>
-                <MudButton @onclick="OpenRegisterDialogAsync" Variant="Variant.Filled" Color="Color.Primary">
+                <MudButton @onclick="OpenRegisterDialogAsync" Variant="Variant.Filled" Color="Color.Primary" Style="margin-right: 50px">
                     Register
                 </MudButton>
                 <MudButton @onclick="OpenSignInDialogAsync" Variant="Variant.Filled" Color="Color.Primary">
@@ -122,19 +124,19 @@
     };
     private Task OpenRegisterDialogAsync()
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true};
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true};
 
         return _DialogService.ShowAsync<RegisterDialog>("Register Dialog", options);
     }
     private Task OpenSignInDialogAsync()
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true};
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true};
 
         return _DialogService.ShowAsync<SignInDialog>("Sign in Dialog", options);
     }
     private Task OpenSignOutDialogAsync()
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true};
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true};
 
         return _DialogService.ShowAsync<SignOutDialog>("Sign out Dialog", options);
     }

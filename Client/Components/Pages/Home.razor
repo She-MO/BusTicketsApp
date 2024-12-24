@@ -1,58 +1,197 @@
 ﻿@page "/"
+@using System.ComponentModel.DataAnnotations
+@using Client.Models
+@inject BusTicketsAppClient _BusTicketsClient;
 
 <PageTitle>Home</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
-<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor and the .NET 8 Template!</MudText>
+<EditForm Model="@Input" OnValidSubmit="FindTrip">
+    <DataAnnotationsValidator/>
+    <MudGrid>
+        <MudItem xs="3" sm="3">
+            <MudAutocomplete T="City" Label="From city" @bind-Value="Input.StartCity" SearchFunc="@Search" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.Name ?? String.Empty" For="() => Input.StartCity"/>
+            @*
+                <MudCardActions>
+                    @if (CurrentBus is not null)
+                    {
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
+                    }
+                    else
+                    {
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+                    }
+                </MudCardActions>
+            *@
+        </MudItem>
+        <MudItem xs="3" sm="3">
+            <MudAutocomplete T="City" Label="To city" @bind-Value="Input.EndCity" SearchFunc="@Search" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.Name ?? String.Empty" For="() => Input.EndCity"/>
+        </MudItem>
+        <MudItem xs="3" sm="3">
+            <MudTextField T="DateTime?" Format="yyyy-MM-dd" Label="Date" @bind-Value="Input.Date" InputType="InputType.Date" Variant="Variant.Outlined"/>
+        </MudItem>
+        <MudItem xs="3" sm="3">
+            <MudNumericField HideSpinButtons="true" @bind-Value="Input.NumberOfPassengers" Label="NumberOfPassengers" Variant="Variant.Outlined" Min="1" Max="5" For="() => Input.NumberOfPassengers"/>
+        </MudItem>
+        <MudItem xs="12" sm="12">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Find trip</MudButton>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+<MudDataGrid Items="@trips" Style="margin-top: 50px">
+    <Columns>
+        <PropertyColumn Property="x => x.DepartureCity.Name" Title="DepartureCity" />
+        <PropertyColumn Property="x => x.ArrivalCity.Name" Title="ArrivalCity" />
+        <PropertyColumn Property="x => x.DepartureDateTime" Title="Departs at"/>
+        <PropertyColumn Property="x => x.ArrivalDateTime" Title="Arrives at"/>
+        <PropertyColumn Property="x => x.Price"/>
+        <PropertyColumn Property="x => x.NumberOfAvailableSeats" Title="Seats available"/>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudStack Row>
+                    <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" >Buy tickets</MudButton>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</MudDataGrid>
 
-<MudAlert Severity="Severity.Normal">
-    You can find documentation and examples on our website here:
-    <MudLink Href="https://mudblazor.com" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        <b>www.mudblazor.com</b>
-    </MudLink>
-</MudAlert>
+@code {
+    public FindTripInput Input = new FindTripInput();
+private IEnumerable<Trip> trips = new List<Trip>
+{
+    new Trip 
+    {
+        DepartureCity = new City { Name = "Київ" },
+        ArrivalCity = new City { Name = "Львів" },
+        DepartureDateTime = new DateTime(2024, 6, 15, 10, 0, 0),
+        ArrivalDateTime = new DateTime(2024, 6, 15, 14, 30, 0),
+        Price = 450.50m,
+        NumberOfAvailableSeats = 40
+    },
+    new Trip 
+    {
+        DepartureCity = new City { Name = "Одеса" },
+        ArrivalCity = new City { Name = "Харків" },
+        DepartureDateTime = new DateTime(2024, 6, 16, 8, 15, 0),
+        ArrivalDateTime = new DateTime(2024, 6, 16, 13, 45, 0),
+        Price = 550.75m,
+        NumberOfAvailableSeats = 35
+    },
+    new Trip 
+    {
+        DepartureCity = new City { Name = "Дніпро" },
+        ArrivalCity = new City { Name = "Запоріжжя" },
+        DepartureDateTime = new DateTime(2024, 6, 17, 12, 0, 0),
+        ArrivalDateTime = new DateTime(2024, 6, 17, 14, 0, 0),
+        Price = 250.25m,
+        NumberOfAvailableSeats = 45
+    },
+    new Trip 
+    {
+        DepartureCity = new City { Name = "Чернівці" },
+        ArrivalCity = new City { Name = "Івано-Франківськ" },
+        DepartureDateTime = new DateTime(2024, 6, 18, 15, 30, 0),
+        ArrivalDateTime = new DateTime(2024, 6, 18, 17, 0, 0),
+        Price = 200.00m,
+        NumberOfAvailableSeats = 50
+    },
+    new Trip 
+    {
+        DepartureCity = new City { Name = "Луцьк" },
+        ArrivalCity = new City { Name = "Рівне" },
+        DepartureDateTime = new DateTime(2024, 6, 19, 9, 45, 0),
+        ArrivalDateTime = new DateTime(2024, 6, 19, 11, 15, 0),
+        Price = 180.50m,
+        NumberOfAvailableSeats = 55
+    },
+    new Trip 
+    {
+        DepartureCity = new City { Name = "Ужгород" },
+        ArrivalCity = new City { Name = "Мукачево" },
+        DepartureDateTime = new DateTime(2024, 6, 20, 11, 0, 0),
+        ArrivalDateTime = new DateTime(2024, 6, 20, 12, 30, 0),
+        Price = 150.75m,
+        NumberOfAvailableSeats = 60
+    },
+    new Trip 
+    {
+        DepartureCity = new City { Name = "Суми" },
+        ArrivalCity = new City { Name = "Полтава" },
+        DepartureDateTime = new DateTime(2024, 6, 21, 14, 0, 0),
+        ArrivalDateTime = new DateTime(2024, 6, 21, 16, 30, 0),
+        Price = 300.25m,
+        NumberOfAvailableSeats = 40
+    },
+    new Trip 
+    {
+        DepartureCity = new City { Name = "Херсон" },
+        ArrivalCity = new City { Name = "Миколаїв" },
+        DepartureDateTime = new DateTime(2024, 6, 22, 7, 30, 0),
+        ArrivalDateTime = new DateTime(2024, 6, 22, 10, 0, 0),
+        Price = 280.00m,
+        NumberOfAvailableSeats = 45
+    },
+    new Trip 
+    {
+        DepartureCity = new City { Name = "Тернопіль" },
+        ArrivalCity = new City { Name = "Хмельницький" },
+        DepartureDateTime = new DateTime(2024, 6, 23, 16, 15, 0),
+        ArrivalDateTime = new DateTime(2024, 6, 23, 18, 30, 0),
+        Price = 220.50m,
+        NumberOfAvailableSeats = 50
+    },
+    new Trip 
+    {
+        DepartureCity = new City { Name = "Краматорськ" },
+        ArrivalCity = new City { Name = "Слов'янськ" },
+        DepartureDateTime = new DateTime(2024, 6, 24, 13, 45, 0),
+        ArrivalDateTime = new DateTime(2024, 6, 24, 15, 0, 0),
+        Price = 170.25m,
+        NumberOfAvailableSeats = 65
+    }
+};
+    private async Task<IEnumerable<City>> Search(string value, CancellationToken cancellationToken)
+    {
+        if (String.IsNullOrEmpty(value) || value.Length < 3)
+        {
+            return Enumerable.Empty<City>();
+        }
+        var cityFilterInput = new CityFilterInput()
+        {
+            Name = new StringOperationFilterInput()
+            {
+                Contains = value
+            }
+        };
+        var sortInput = new List<CitySortInput>()
+        {
+            new CitySortInput()
+            {
+                Name = SortEnumType.Asc
+            }
+        };
+        var result = await _BusTicketsClient.GetCities.ExecuteAsync(10, null, null, null, cityFilterInput, sortInput, cancellationToken);
+        return result?.Data?.Cities?.Edges?.Select(c => new City()
+        {
+            Id = c.Node.Id,
+            Name = c.Node.Name
+        }) ?? Enumerable.Empty<City>();
 
-<br />
-<MudText Typo="Typo.h5" GutterBottom="true">Interactivity in this Template</MudText>
-<br />
-<MudText Typo="Typo.body2">
-    When you opt for the "Global" Interactivity Location, <br />
-    the render modes are defined in App.razor and consequently apply to all child components.<br />
-    In this case, providers are globally set in the MainLayout.<br />
-    <br />
-    On the other hand, if you choose the "Per page/component" Interactivity Location,<br />
-    it is necessary to include the <br />
-    <br />
-    &lt;MudPopoverProvider /&gt; <br />
-    &lt;MudDialogProvider /&gt; <br />
-    &lt;MudSnackbarProvider /&gt; <br />
-    <br />
-    components on every interactive page.<br />
-    <br />
-    If a render mode is not specified for a page, it defaults to Server-Side Rendering (SSR),<br />
-    similar to this page. While MudBlazor allows pages to be rendered in SSR,<br />
-    please note that interactive features, such as buttons and dropdown menus, will not be functional.
-</MudText>
+    }
 
-<br />
-<MudText Typo="Typo.h5" GutterBottom="true">What's New in Blazor with the Release of .NET 8</MudText>
-<br />
-<MudText Typo="Typo.h6" GutterBottom="true">Prerendering</MudText>
-<MudText Typo="Typo.body2" GutterBottom="true">
-    If you're exploring the features of .NET 8 Blazor,<br /> you might be pleasantly surprised to learn that each page is prerendered on the server,<br /> regardless of the selected render mode.<br /><br />
-    This means that you'll need to inject all necessary services on the server,<br /> even when opting for the wasm (WebAssembly) render mode.<br /><br />
-    This prerendering functionality is crucial to ensuring that WebAssembly mode feels fast and responsive,<br /> especially when it comes to initial page load times.<br /><br />
-    For more information on how to detect prerendering and leverage the RenderContext, you can refer to the following link:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issuecomment-1783568121" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
-
-<br />
-<MudText Typo="Typo.h6" GutterBottom="true">InteractiveAuto</MudText>
-<MudText Typo="Typo.body2">
-    A discussion on how to achieve this can be found here:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issue-1950424116" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
+    private async Task FindTrip()
+    {
+        await Task.Delay(1000);
+    }
+    public record FindTripInput
+    {
+        [Required]
+        public City? StartCity { get; set; }
+        [Required]
+        public City? EndCity { get; set; }
+        [Required]
+        public DateTime? Date { get; set; }
+        [Required] 
+        public int NumberOfPassengers { get; set; }
+    }
+}

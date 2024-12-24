@@ -8,9 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
-    <PackageReference Include="MudBlazor" Version="7.*" />
-    <PackageReference Include="StrawberryShake.Blazor" Version="14.1.0" />
+    <PackageReference Include="MudBlazor" Version="7.15.0" />
+    <PackageReference Include="StrawberryShake.Blazor" Version="14.2.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +29,7 @@
 
   <ItemGroup>
     <Folder Include="Models\AggregatedData\" />
+    <Folder Include="Queries\User\" />
   </ItemGroup>
 
 </Project>

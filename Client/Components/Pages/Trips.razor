@@ -121,33 +121,20 @@
         curPage = state.Page;
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         var sortInput = new List<TripSortInput>();
-        /*
         if (sortDefinition is null || !sortDefinition.Descending)
         {
             sortInput.Add(new TripSortInput()
             {
-                Route = new RouteSortInput()
-                {
-                    ShortName = SortEnumType.Asc
-                }
+                Date = SortEnumType.Asc
             });
         }
         else
         {
             sortInput.Add(new TripSortInput()
             {
-                Route = new RouteSortInput()
-                {
-                    ShortName = SortEnumType.Desc
-                }
+                Date = SortEnumType.Desc
             });
         }
-        */
-        sortInput.Add(new TripSortInput()
-        {
-            Date = SortEnumType.Asc
-        });
-
         TripFilterInput? tripFilterInput = null;
         if (!String.IsNullOrEmpty(SearchString))
         {

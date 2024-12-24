@@ -1,4 +1,5 @@
 ﻿@using System.ComponentModel.DataAnnotations
+@using BusTicketsApp.Client
 @using Client.Auth
 @inject BusTicketsAppClient BusTicketsClient
 @inject CustomAuthenticationStateProvider _AuthenticationStateProvider
@@ -10,7 +11,7 @@
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator/>
             <MudGrid>
-                <MudItem xs="12" sm="7">
+                <MudItem xs="12" sm="12">
                     <MudCard>
                         <MudCardContent>
                             <MudTextField Label="Email" Class="mt-3"

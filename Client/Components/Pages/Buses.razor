@@ -7,32 +7,33 @@
 
 <PageTitle>Buses</PageTitle>
 
-<EditForm Model="@Input" OnValidSubmit="AddOrRenameBus">
-    <DataAnnotationsValidator/>
-    <MudGrid>
-        <MudItem xs="12" sm="12">
-            <MudCard>
-                <MudCardContent>
-                    <MudTextField Label="Bus number" HelperText="Max. 20 characters"
-                                  @bind-Value="Input.BusNumber" For="@(() => Input.BusNumber)"/>
-                    <MudTextField Label="Number of seats" HelperText="Number between 10 and 100"
-                                  @bind-Value="Input.NumberOfSeats" For="@(() => Input.NumberOfSeats)"/>
-                    <MudAutocomplete T="Carrier" Label="Carriers" @bind-Value="Input.Carrier" SearchFunc="@Search" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.Name ?? String.Empty" For="() => Input.Carrier"/>
-                </MudCardContent>
-                <MudCardActions>
-                    @if (CurrentBus is not null)
-                    {
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
-                    }
-                    else
-                    {
+<AuthorizeView Policy="IsAdmin">
+<Authorized Context="authContext">
+    @foreach (var message in Errors ?? Enumerable.Empty<string>())
+    {
+        <MudAlert Severity="Severity.Error">@message</MudAlert>
+    }
+    <EditForm Model="@Input" OnValidSubmit="AddOrRenameBus">
+        <DataAnnotationsValidator/>
+        <MudGrid>
+            <MudItem xs="12" sm="12">
+                <MudCard>
+                    <MudCardContent>
+                        <MudTextField Label="Bus number" HelperText="Max. 20 characters"
+                                      @bind-Value="Input.BusNumber" For="@(() => Input.BusNumber)"/>
+                        <MudTextField Label="Number of seats" HelperText="Number between 10 and 100"
+                                      @bind-Value="Input.NumberOfSeats" For="@(() => Input.NumberOfSeats)"/>
+                        <MudAutocomplete T="Carrier" Label="Carriers" @bind-Value="Input.Carrier" SearchFunc="@Search" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.Name ?? String.Empty" For="() => Input.Carrier"/>
+                    </MudCardContent>
+                    <MudCardActions>
                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
-                    }
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
-</EditForm>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</Authorized>
+</AuthorizeView>
 <MudDataGrid @ref="dataGrid" T="Bus" ServerData="ReloadData" Filterable="false">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Buses</MudText>
@@ -42,24 +43,19 @@
     </ToolBarContent>
     <Columns>
         <PropertyColumn Property="x => x.BusNumber"/>
-        <PropertyColumn Property="x => x.NumberOfSeats"/>
-        <PropertyColumn Property="x => x.Carrier.Name"/>
-        @*
-        <TemplateColumn CellClass="d-flex justify-end">
-            <CellTemplate>
-                <MudStack Row>
-                    @if (context.Item.Id == CurrentBus)
-                    {
-                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseBus(null)">Deselect</MudButton>
-                    }
-                    else
-                    {
-                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseBus(context.Item)">Rename</MudButton>
-                    }
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
-    *@
+        <PropertyColumn Property="x => x.NumberOfSeats" Sortable="false"/>
+        <PropertyColumn Property="x => x.Carrier.Name" Sortable="false"/>
+        <AuthorizeView Policy="IsAdmin">
+        <Authorized Context="authContext">
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => DeleteBus(context.Item.Id)">Delete</MudButton>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Authorized>
+        </AuthorizeView>
     </Columns>
     <PagerContent>
         <MudDataGridPager T="Bus"/>
@@ -75,6 +71,7 @@
     private string? StartCursor;
     private int curPage = 0;
     public BusInput Input = new();
+    public List<string> Errors = new List<string>();
     public Carrier? CarrierInput = new Carrier()
     {
         Id = String.Empty,
@@ -235,6 +232,37 @@
         }) ?? Enumerable.Empty<Carrier>();
 
     }
+    private async Task DeleteBus(string busId)
+    {
+        var result = await _BusTicketsClient.DeleteBus.ExecuteAsync(busId);
+        Errors.Clear();
+        if (result.Errors.Count > 0)
+        {
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+            return;
+        }
+
+        if (result.Data?.RemoveBus.Errors is not null)
+        {
+            foreach (var error in result.Data.RemoveBus.Errors)
+            {
+                if (error is IDeleteBus_RemoveBus_Errors_BusUsedInTripError castedError)
+                {
+                    Errors.Add(castedError.Message);
+                }
+            }
+            return;
+        }
+
+        if (result.Data.RemoveBus.Boolean == true)
+        {
+            await dataGrid.ReloadServerData();
+        }
+    }
+
 
     public record BusInput
     {

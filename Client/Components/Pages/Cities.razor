@@ -4,9 +4,12 @@
 @using Client.Models
 @inject BusTicketsAppClient _BusTicketsClient;
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Cities</PageTitle>
 
-<h1>Hello, world!</h1>
+@foreach (var message in Errors ?? Enumerable.Empty<string>())
+{
+    <MudAlert Severity="Severity.Error">@message</MudAlert>
+}
 <EditForm Model="@Input" OnValidSubmit="AddOrRenameCity">
     <DataAnnotationsValidator/>
     <MudGrid>
@@ -67,7 +70,9 @@
     private string? EndCursor;
     private string? StartCursor;
     private int curPage = 0;
+    public List<string> Errors = new List<string>();
     public CityInput Input = new();
+    public int totalNumberOfItems = 0;
     public string? SearchString = null;
     protected async Task<GridData<City>> ReloadData(GridState<City> state)
     {
@@ -75,13 +80,16 @@
         int? last = null;
         string? before = null;
         string? after = null;
-        if (curPage < state.Page)
+        if (state.Page == 0 || curPage == state.Page)
+        {
+            first = state.PageSize;
+        } else if (state.Page == totalNumberOfItems / state.PageSize)
+        {
+            last = totalNumberOfItems % state.PageSize;
+        } else if (curPage < state.Page)
         {
             first = state.PageSize;
             after = EndCursor;
-        } else if (curPage > state.Page && state.Page == 0 || curPage == state.Page)
-        {
-            first = state.PageSize;
         }
         else
         {
@@ -89,6 +97,7 @@
             first = null;
             last = state.PageSize;
         }
+        curPage = state.Page;
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         var sortInput = new List<CitySortInput>();
         if (sortDefinition is null || !sortDefinition.Descending)
@@ -132,6 +141,7 @@
         EndCursor = results.Data?.Cities?.PageInfo.EndCursor;
         StartCursor = results.Data?.Cities?.PageInfo.StartCursor;
         ChooseCity(null, null);
+        totalNumberOfItems = results.Data?.Cities?.TotalCount ?? 0;
         return new GridData<City>()
         {
             TotalItems = results.Data?.Cities?.TotalCount ?? 0,
@@ -193,6 +203,37 @@
             await dataGrid.ReloadServerData();
         }
     }
+    private async Task DeleteCity(string cityId)
+    {
+        var result = await _BusTicketsClient.DeleteCity.ExecuteAsync(cityId);
+        Errors.Clear();
+        if (result.Errors.Count > 0)
+        {
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+            return;
+        }
+
+        if (result.Data?.RemoveCity.Errors is not null)
+        {
+            foreach (var error in result.Data.RemoveCity.Errors)
+            {
+                if (error is IDeleteCity_RemoveCity_Errors_CityUsedInRouteError castedError)
+                {
+                    Errors.Add(castedError.Message);
+                }
+            }
+            return;
+        }
+
+        if (result.Data.RemoveCity.Boolean == true)
+        {
+            await dataGrid.ReloadServerData();
+        }
+    }
+
 
     public record CityInput
     {

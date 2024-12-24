@@ -4,32 +4,39 @@
 @using Client.Models
 @inject BusTicketsAppClient _BusTicketsClient;
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Carriers</PageTitle>
 
-<h1>Hello, world!</h1>
-<EditForm Model="@Input" OnValidSubmit="AddOrRenameCarrier">
-    <DataAnnotationsValidator/>
-    <MudGrid>
-        <MudItem xs="12" sm="12">
-            <MudCard>
-                <MudCardContent>
-                    <MudTextField Label="First name" HelperText="Max. 20 characters"
-                                  @bind-Value="Input.Name" For="@(() => Input.Name)"/>
-                </MudCardContent>
-                <MudCardActions>
-                    @if (CurrentCarrier is not null)
-                    {
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
-                    }
-                    else
-                    {
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
-                    }
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
-</EditForm>
+<AuthorizeView Policy="IsAdmin">
+<Authorized Context="authContext">
+    @foreach (var message in Errors ?? Enumerable.Empty<string>())
+    {
+        <MudAlert Severity="Severity.Error">@message</MudAlert>
+    }
+    <EditForm Model="@Input" OnValidSubmit="AddOrRenameCarrier">
+        <DataAnnotationsValidator/>
+        <MudGrid>
+            <MudItem xs="12" sm="12">
+                <MudCard>
+                    <MudCardContent>
+                        <MudTextField Label="Carrier name" HelperText="Max. 20 characters"
+                                      @bind-Value="Input.Name" For="@(() => Input.Name)"/>
+                    </MudCardContent>
+                    <MudCardActions>
+                        @if (CurrentCarrier is not null)
+                        {
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
+                        }
+                        else
+                        {
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+                        }
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</Authorized>
+</AuthorizeView>
 <MudDataGrid @ref="dataGrid" T="Carrier" ServerData="ReloadData" Filterable="false">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Carriers</MudText>
@@ -39,20 +46,25 @@
     </ToolBarContent>
     <Columns>
         <PropertyColumn Property="x => x.Name"/>
-        <TemplateColumn CellClass="d-flex justify-end">
-            <CellTemplate>
-                <MudStack Row>
-                    @if (context.Item.Id == CurrentCarrier)
-                    {
-                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCarrier(null, null)">Deselect</MudButton>
-                    }
-                    else
-                    {
-                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCarrier(context.Item.Id, context.Item.Name)">Rename</MudButton>
-                    }
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
+        <AuthorizeView Policy="IsAdmin">
+        <Authorized Context="authContext">
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => DeleteCarrier(context.Item.Id)">Delete</MudButton>
+                        @if (context.Item.Id == CurrentCarrier)
+                        {
+                            <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCarrier(null, null)">Deselect</MudButton>
+                        }
+                        else
+                        {
+                            <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCarrier(context.Item.Id, context.Item.Name)">Rename</MudButton>
+                        }
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Authorized>
+        </AuthorizeView>
     </Columns>
     <PagerContent>
         <MudDataGridPager T="Carrier"/>
@@ -68,20 +80,25 @@
     private string? StartCursor;
     private int curPage = 0;
     public CarrierInput Input = new();
+    public List<string> Errors = new List<string>();
     public string? SearchString = null;
+    public int totalNumberOfItems = 0;
     protected async Task<GridData<Carrier>> ReloadData(GridState<Carrier> state)
     {
         int? first = null;
         int? last = null;
         string? before = null;
         string? after = null;
-        if (curPage < state.Page)
+        if (state.Page == 0 || curPage == state.Page)
+        {
+            first = state.PageSize;
+        } else if (state.Page == totalNumberOfItems / state.PageSize)
+        {
+            last = totalNumberOfItems % state.PageSize;
+        } else if (curPage < state.Page)
         {
             first = state.PageSize;
             after = EndCursor;
-        } else if (curPage > state.Page && state.Page == 0 || curPage == state.Page)
-        {
-            first = state.PageSize;
         }
         else
         {
@@ -89,6 +106,7 @@
             first = null;
             last = state.PageSize;
         }
+        curPage = state.Page;
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         var sortInput = new List<CarrierSortInput>();
         if (sortDefinition is null || !sortDefinition.Descending)
@@ -132,6 +150,7 @@
         EndCursor = results.Data?.Carriers?.PageInfo.EndCursor;
         StartCursor = results.Data?.Carriers?.PageInfo.StartCursor;
         ChooseCarrier(null, null);
+        totalNumberOfItems = results.Data?.Carriers?.TotalCount ?? 0;
         return new GridData<Carrier>()
         {
             TotalItems = results.Data?.Carriers?.TotalCount ?? 0,
@@ -176,6 +195,36 @@
     //    EndCursor = results.Data.Carriers?.PageInfo.EndCursor;
     //    StartCursor = results.Data.Carriers?.PageInfo.StartCursor;
     //}
+    private async Task DeleteCarrier(string carrierId)
+    {
+        var result = await _BusTicketsClient.DeleteCarrier.ExecuteAsync(carrierId);
+        Errors.Clear();
+        if (result.Errors.Count > 0)
+        {
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+            return;
+        }
+
+        if (result.Data?.RemoveCarrier.Errors is not null)
+        {
+            foreach (var error in result.Data.RemoveCarrier.Errors)
+            {
+                if (error is IDeleteCarrier_RemoveCarrier_Errors_OneOfCarrierBusesUsedInTripError castedError)
+                {
+                    Errors.Add(castedError.Message);
+                }
+            }
+            return;
+        }
+
+        if (result.Data.RemoveCarrier.Boolean == true)
+        {
+            await dataGrid.ReloadServerData();
+        }
+    }
 
     private async Task AddOrRenameCarrier()
     {
