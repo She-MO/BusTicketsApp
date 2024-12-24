@@ -60,7 +60,7 @@ public static class UserMutations
         //        new ClaimsPrincipal(claimsIdentity), authProperties);
         //}
     }
-    [Error<InvalidEmailOrPasswordException>]
+    //[Error<InvalidEmailOrPasswordException>]
     public static async Task<string> LogInUserAsync(
         LogInUserInput input,
         IPasswordHasher<User> passwordHasher,
@@ -75,7 +75,7 @@ public static class UserMutations
         if (user is null ||
             passwordHasher.VerifyHashedPassword(user, user.Password, input.Password) != PasswordVerificationResult.Success)
         {
-            throw new InvalidEmailOrPasswordException();
+            return String.Empty;
         }
         return tokenProvider.Create(user);
         //List<Claim> claims = new List<Claim>

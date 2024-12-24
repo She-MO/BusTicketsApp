@@ -10,4 +10,5 @@ public sealed class Bus
     public required string BusNumber { get; set; }
     public required int CarrierId { get; init; }
     public Carrier? Carrier { get; init; }
+    public ICollection<Trip> Trips { get; init; } = new List<Trip>();
 }

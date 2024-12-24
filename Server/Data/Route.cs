@@ -7,4 +7,5 @@ public sealed class Route
     public string? ShortName { get; set; }
     public int LengthInKm { get; set; }
     public IList<RouteStop> RouteStops { get; init; }= new List<RouteStop>();
+    public IList<Timetable> Timetables { get; init; }= new List<Timetable>();
 }

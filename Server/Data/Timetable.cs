@@ -8,5 +8,6 @@ public sealed class Timetable
     public required TimeOnly TimeOfDeparture { get; set; }
     public required TimeOnly TimeOfArrival { get; set; }
     public required DayOfWeek DayOfWeek { get; set; }
+    public ICollection<Trip> Trips { get; init; } = new List<Trip>();
     
 }

@@ -6,5 +6,5 @@ public sealed class TripSeats
     public required int RouteId { get; init; }
     public required byte Sequence { get; init; }
     public RouteStop? RouteStop { get; init; }
-    public required sbyte AvailableSeats { get; set; }
+    public required byte AvailableSeats { get; set; }
 }
