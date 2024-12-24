@@ -60,7 +60,7 @@ builder.Services.AddSingleton<TokenProvider>()
     //.AddDataAnnotationsValidator()
     .ModifyCostOptions(options =>
     {
-        options.MaxFieldCost = 10_000;
+        options.MaxFieldCost = 20_000;
         options.MaxTypeCost = 10_000;
         options.EnforceCostLimits = true;
         options.ApplyCostDefaults = true;

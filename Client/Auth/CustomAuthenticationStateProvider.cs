@@ -8,11 +8,13 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
     private ProtectedSessionStorage _sessionStorage;
     private IConfiguration _configuration;
+    private TokenStorage _tokenStorage;
 
-    public CustomAuthenticationStateProvider(ProtectedSessionStorage sessionStorage, IConfiguration configuration)
+    public CustomAuthenticationStateProvider(ProtectedSessionStorage sessionStorage, IConfiguration configuration, TokenStorage tokenStorage)
     {
         _sessionStorage = sessionStorage;
         _configuration = configuration;
+        _tokenStorage = tokenStorage;
     }
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
@@ -30,11 +32,13 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     public async Task LoginAsync(string token)
     {
         await _sessionStorage.SetAsync("token", token);
+        _tokenStorage.Token = token;
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 
     public async Task LogOutAsync()
     {
+        _tokenStorage.Token = String.Empty;
         await _sessionStorage.DeleteAsync("token");
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }

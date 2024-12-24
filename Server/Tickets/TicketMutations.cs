@@ -54,7 +54,7 @@ public static class TicketMutations
             EndCityId = input.ToCityId,
             NumberOfPassengers = (byte)input.numberOfPassengers,
             UserId = Int32.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)),
-            TotalPrice = trip.Timetable.Route.RouteStops.Skip(firstCityInRoute.Sequence).SkipLast(trip.Timetable.Route.RouteStops.Count - secondCityInRoute.Sequence).Sum(rs => rs.KmFromPrevStop) * trip.PricePerKm * input.numberOfPassengers
+            TotalPrice = trip.Timetable.Route.RouteStops.OrderBy(rs => rs.Sequence).Skip(firstCityInRoute.Sequence).SkipLast(trip.Timetable.Route.RouteStops.Count - secondCityInRoute.Sequence).Sum(rs => rs.KmFromPrevStop) * trip.PricePerKm * input.numberOfPassengers
         };
         dbContext.Tickets.Add(ticket);
         await dbContext.SaveChangesAsync(cancellationToken);

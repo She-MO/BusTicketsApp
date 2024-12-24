@@ -1,7 +1,9 @@
 ﻿@page "/"
 @using System.ComponentModel.DataAnnotations
+@using Client.Components.Dialogs
 @using Client.Models
 @inject BusTicketsAppClient _BusTicketsClient;
+@inject IDialogService _DialogService
 
 <PageTitle>Home</PageTitle>
 
@@ -27,17 +29,17 @@
             <MudAutocomplete T="City" Label="To city" @bind-Value="Input.EndCity" SearchFunc="@Search" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.Name ?? String.Empty" For="() => Input.EndCity"/>
         </MudItem>
         <MudItem xs="3" sm="3">
-            <MudTextField T="DateTime?" Format="yyyy-MM-dd" Label="Date" @bind-Value="Input.Date" InputType="InputType.Date" Variant="Variant.Outlined"/>
+            <MudTextField T="DateTime" Format="yyyy-MM-dd" Label="Date" @bind-Value="Input.Date" InputType="InputType.Date" Variant="Variant.Outlined"/>
         </MudItem>
         <MudItem xs="3" sm="3">
             <MudNumericField HideSpinButtons="true" @bind-Value="Input.NumberOfPassengers" Label="NumberOfPassengers" Variant="Variant.Outlined" Min="1" Max="5" For="() => Input.NumberOfPassengers"/>
         </MudItem>
         <MudItem xs="12" sm="12">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Find trip</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="FindTrip">Find trip</MudButton>
         </MudItem>
     </MudGrid>
 </EditForm>
-<MudDataGrid Items="@trips" Style="margin-top: 50px">
+<MudDataGrid @ref="dataGrid" T="Trip" ServerData="ReloadData" Style="margin-top: 50px">
     <Columns>
         <PropertyColumn Property="x => x.DepartureCity.Name" Title="DepartureCity" />
         <PropertyColumn Property="x => x.ArrivalCity.Name" Title="ArrivalCity" />
@@ -45,111 +47,23 @@
         <PropertyColumn Property="x => x.ArrivalDateTime" Title="Arrives at"/>
         <PropertyColumn Property="x => x.Price"/>
         <PropertyColumn Property="x => x.NumberOfAvailableSeats" Title="Seats available"/>
-        <TemplateColumn CellClass="d-flex justify-end">
-            <CellTemplate>
-                <MudStack Row>
-                    <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" >Buy tickets</MudButton>
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
+        <AuthorizeView>
+            <Authorized Context="authContext">
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudStack Row>
+                            <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" >Buy tickets</MudButton>
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Authorized>
+        </AuthorizeView>
     </Columns>
 </MudDataGrid>
 
 @code {
     public FindTripInput Input = new FindTripInput();
-private IEnumerable<Trip> trips = new List<Trip>
-{
-    new Trip 
-    {
-        DepartureCity = new City { Name = "Київ" },
-        ArrivalCity = new City { Name = "Львів" },
-        DepartureDateTime = new DateTime(2024, 6, 15, 10, 0, 0),
-        ArrivalDateTime = new DateTime(2024, 6, 15, 14, 30, 0),
-        Price = 450.50m,
-        NumberOfAvailableSeats = 40
-    },
-    new Trip 
-    {
-        DepartureCity = new City { Name = "Одеса" },
-        ArrivalCity = new City { Name = "Харків" },
-        DepartureDateTime = new DateTime(2024, 6, 16, 8, 15, 0),
-        ArrivalDateTime = new DateTime(2024, 6, 16, 13, 45, 0),
-        Price = 550.75m,
-        NumberOfAvailableSeats = 35
-    },
-    new Trip 
-    {
-        DepartureCity = new City { Name = "Дніпро" },
-        ArrivalCity = new City { Name = "Запоріжжя" },
-        DepartureDateTime = new DateTime(2024, 6, 17, 12, 0, 0),
-        ArrivalDateTime = new DateTime(2024, 6, 17, 14, 0, 0),
-        Price = 250.25m,
-        NumberOfAvailableSeats = 45
-    },
-    new Trip 
-    {
-        DepartureCity = new City { Name = "Чернівці" },
-        ArrivalCity = new City { Name = "Івано-Франківськ" },
-        DepartureDateTime = new DateTime(2024, 6, 18, 15, 30, 0),
-        ArrivalDateTime = new DateTime(2024, 6, 18, 17, 0, 0),
-        Price = 200.00m,
-        NumberOfAvailableSeats = 50
-    },
-    new Trip 
-    {
-        DepartureCity = new City { Name = "Луцьк" },
-        ArrivalCity = new City { Name = "Рівне" },
-        DepartureDateTime = new DateTime(2024, 6, 19, 9, 45, 0),
-        ArrivalDateTime = new DateTime(2024, 6, 19, 11, 15, 0),
-        Price = 180.50m,
-        NumberOfAvailableSeats = 55
-    },
-    new Trip 
-    {
-        DepartureCity = new City { Name = "Ужгород" },
-        ArrivalCity = new City { Name = "Мукачево" },
-        DepartureDateTime = new DateTime(2024, 6, 20, 11, 0, 0),
-        ArrivalDateTime = new DateTime(2024, 6, 20, 12, 30, 0),
-        Price = 150.75m,
-        NumberOfAvailableSeats = 60
-    },
-    new Trip 
-    {
-        DepartureCity = new City { Name = "Суми" },
-        ArrivalCity = new City { Name = "Полтава" },
-        DepartureDateTime = new DateTime(2024, 6, 21, 14, 0, 0),
-        ArrivalDateTime = new DateTime(2024, 6, 21, 16, 30, 0),
-        Price = 300.25m,
-        NumberOfAvailableSeats = 40
-    },
-    new Trip 
-    {
-        DepartureCity = new City { Name = "Херсон" },
-        ArrivalCity = new City { Name = "Миколаїв" },
-        DepartureDateTime = new DateTime(2024, 6, 22, 7, 30, 0),
-        ArrivalDateTime = new DateTime(2024, 6, 22, 10, 0, 0),
-        Price = 280.00m,
-        NumberOfAvailableSeats = 45
-    },
-    new Trip 
-    {
-        DepartureCity = new City { Name = "Тернопіль" },
-        ArrivalCity = new City { Name = "Хмельницький" },
-        DepartureDateTime = new DateTime(2024, 6, 23, 16, 15, 0),
-        ArrivalDateTime = new DateTime(2024, 6, 23, 18, 30, 0),
-        Price = 220.50m,
-        NumberOfAvailableSeats = 50
-    },
-    new Trip 
-    {
-        DepartureCity = new City { Name = "Краматорськ" },
-        ArrivalCity = new City { Name = "Слов'янськ" },
-        DepartureDateTime = new DateTime(2024, 6, 24, 13, 45, 0),
-        ArrivalDateTime = new DateTime(2024, 6, 24, 15, 0, 0),
-        Price = 170.25m,
-        NumberOfAvailableSeats = 65
-    }
-};
+    public MudDataGrid<Trip> dataGrid;
     private async Task<IEnumerable<City>> Search(string value, CancellationToken cancellationToken)
     {
         if (String.IsNullOrEmpty(value) || value.Length < 3)
@@ -178,10 +92,51 @@ private IEnumerable<Trip> trips = new List<Trip>
         }) ?? Enumerable.Empty<City>();
 
     }
+        protected async Task<GridData<Trip>> ReloadData(GridState<Trip> state)
+    {
+        if (Input.StartCity is null || Input.EndCity is null)
+        {
+            return new GridData<Trip>()
+            {
+                TotalItems = 0,
+                Items = Enumerable.Empty<Trip>()
+            };
+        }
+
+        var results = await _BusTicketsClient.FindTrips.ExecuteAsync(Input.Date, Input.StartCity.Id, Input.EndCity.Id, Input.NumberOfPassengers);
+        var trips = results.Data?.FindTrips?.Select(
+            e => new Trip
+            {
+                Id = e.Id,
+                DepartureCity = Input.StartCity,
+                ArrivalCity = Input.EndCity,
+                NumberOfAvailableSeats = e.TripSeats.OrderBy(rs => rs.Sequence).Skip(e.Timetable.Route.RouteStops.First(rs => rs.City.Id == Input.StartCity.Id).Sequence - 1).SkipLast(e.TripSeats.Count - (e.Timetable.Route.RouteStops.First(rs => rs.City.Id == Input.EndCity.Id).Sequence - 1)).Min(ts => ts.AvailableSeats),
+                Price = e.Timetable.Route.RouteStops.OrderBy(rs => rs.Sequence).Skip(e.Timetable.Route.RouteStops.First(rs => rs.City.Id == Input.StartCity.Id).Sequence).SkipLast(e.Timetable.Route.RouteStops.Count - e.Timetable.Route.RouteStops.First(rs => rs.City.Id == Input.EndCity.Id).Sequence).Sum(rs => rs.KmFromPrevStop) * e.PricePerKm * Input.NumberOfPassengers,
+                DepartureDateTime = new DateTime(e.Date.Ticks + e.Timetable.TimeOfDeparture.Ticks + e.Timetable.Route.RouteStops.OrderBy(rs => rs.Sequence).Take(e.Timetable.Route.RouteStops.First(rs => rs.City.Id == Input.StartCity.Id).Sequence).Sum(rs => rs.TimeFromPrevStop.Ticks)),
+                ArrivalDateTime = new DateTime(e.Date.Ticks + e.Timetable.TimeOfDeparture.Ticks + e.Timetable.Route.RouteStops.OrderBy(rs => rs.Sequence).Take(e.Timetable.Route.RouteStops.First(rs => rs.City.Id == Input.EndCity.Id).Sequence).Sum(rs => rs.TimeFromPrevStop.Ticks))
+            }
+            ).ToArray();
+        return new GridData<Trip>()
+        {
+            TotalItems = results.Data?.FindTrips?.Count ?? 0,
+            Items = trips ?? Enumerable.Empty<Trip>()
+        };
+    }
+    private async Task OpenSignOutDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true};
+
+        var res = await (await _DialogService.ShowAsync<BuyTicketDialog>("Confirm ticket purchase", options)).Result;
+        if (!res.Canceled)
+        {
+            await dataGrid.ReloadServerData();
+        }
+    }
+
 
     private async Task FindTrip()
     {
-        await Task.Delay(1000);
+        await dataGrid.ReloadServerData();
     }
     public record FindTripInput
     {
@@ -190,7 +145,7 @@ private IEnumerable<Trip> trips = new List<Trip>
         [Required]
         public City? EndCity { get; set; }
         [Required]
-        public DateTime? Date { get; set; }
+        public DateTime Date { get; set; } = DateTime.Today;
         [Required] 
         public int NumberOfPassengers { get; set; }
     }

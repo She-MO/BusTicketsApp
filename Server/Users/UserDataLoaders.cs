@@ -33,7 +33,7 @@ public static class UserDataLoaders
             .AsNoTracking()
             .Where(b => userIds.Contains(b.UserId))
             .OrderBy(b => b.Id)
-            .Select(b => b.Id, selector)
+            .Select(b => b.UserId, selector)
             .ToBatchPageAsync(b => b.UserId, pagingArguments, cancellationToken);
     }
 }
