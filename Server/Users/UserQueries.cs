@@ -1,6 +1,9 @@
-﻿using BusTicketsApp.Server.Data;
+﻿using System.Security.Claims;
+using BusTicketsApp.Server.Data;
 using GreenDonut.Selectors;
 using HotChocolate.Execution.Processing;
+using HotChocolate.Pagination;
+using HotChocolate.Types.Pagination;
 using Microsoft.EntityFrameworkCore;
 
 namespace BusTicketsApp.Server.Users;
@@ -39,5 +42,20 @@ public static class UserQueries
         return await userById
             .Select(selection)
             .LoadRequiredAsync(ids, cancellationToken);
+    }
+    [UsePaging]
+    public static async Task<Connection<Ticket>> GetTicketsByUserIdAsync(
+        ITicketsByUserIdDataLoader ticketsByUserId,
+        PagingArguments pagingArguments,
+        ISelection selection,
+        ClaimsPrincipal claimsPrincipal,
+        CancellationToken cancellationToken)
+    {
+        var userId = Int32.Parse(claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "-1");
+        return await ticketsByUserId
+            .WithPagingArguments(pagingArguments)
+            .Select(selection)
+            .LoadAsync(userId, cancellationToken)
+            .ToConnectionAsync();
     }
 }

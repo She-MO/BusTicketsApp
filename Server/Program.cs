@@ -24,7 +24,13 @@ var  myAllowSpecificOrigins = "_myAllowSpecificOrigins";
                         ClockSkew = TimeSpan.Zero
                     };
             });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("IsAdmin",
+        policy => policy.RequireClaim("Role", "Admin"));
+    options.AddPolicy("IsManagerOrAdmin",
+        policy => policy.RequireClaim("Role", "Admin", "Manager"));
+});
 //builder.Services.AddTransient<LogInUserInputValidator>();
 //builder.Services.AddTransient<RegisterUserInputValidator>();
 builder.Services.AddSingleton<TokenProvider>()
@@ -51,7 +57,7 @@ builder.Services.AddSingleton<TokenProvider>()
     .AddSorting()
     .AddServerTypes()
     .AddAuthorization()
-    .AddDataAnnotationsValidator()
+    //.AddDataAnnotationsValidator()
     .ModifyCostOptions(options =>
     {
         options.MaxFieldCost = 10_000;

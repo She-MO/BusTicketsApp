@@ -30,7 +30,7 @@ public static class BusMutations
     }
     [Authorize(Policy = "IsManagerOrAdmin")]
     [Error<BusUsedInTripException>]
-    public static async Task<bool> RemoveCityAsync(
+    public static async Task<bool> RemoveBusAsync(
         RemoveBusInput input,
         ApplicationDbContext dbContext,
         CancellationToken cancellationToken)
