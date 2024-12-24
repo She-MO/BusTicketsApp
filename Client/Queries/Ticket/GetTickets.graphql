@@ -1,0 +1,53 @@
+﻿query GetTickets($first: Int, $after: String, $last: Int, $before: String) {
+    ticketsByUserId (
+        first: $first
+        last: $last
+        before: $before
+        after: $after
+    ) {
+        edges {
+            node {
+                id
+                trip {
+                    id
+                    date
+                    timetable {
+                        timeOfDeparture
+                        timeOfArrival
+                        dayOfWeek
+                        route {
+                            id
+                            shortName
+                            routeStops {
+                                kmFromPrevStop
+                                timeFromPrevStop
+                                city {
+                                    id
+                                    name
+                                }
+                                sequence
+                            }
+                        }
+                    }
+                }
+                startCity {
+                    id
+                    name
+                }
+                endCity {
+                    id
+                    name
+                }
+                totalPrice
+                numberOfPassengers
+            }
+        }
+        pageInfo {
+            startCursor
+            endCursor
+            hasPreviousPage
+            hasNextPage
+        }
+        totalCount
+    }
+}

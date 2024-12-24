@@ -1,0 +1,436 @@
+﻿@page "/Routes"
+@using System.Collections
+@using System.ComponentModel.DataAnnotations
+@using System.Diagnostics
+@using BusTicketsApp.Client
+@using Client.Models
+@using FluentValidation
+@using Microsoft.AspNetCore.Authorization
+@using Severity = MudBlazor.Severity
+@inject BusTicketsAppClient _BusTicketsClient;
+@attribute [Authorize(Policy = "IsManagerOrAdmin")]
+
+<PageTitle>Routes</PageTitle>
+
+<MudGrid>
+    <MudItem xs="6">
+        <AuthorizeView Policy="IsAdmin">
+            <Authorized Context="authContext">
+                @foreach (var message in Errors ?? Enumerable.Empty<string>())
+                {
+                <MudAlert Severity="Severity.Error">@message</MudAlert>
+                }
+                <MudCard>
+                    <MudForm Model="@Input" @ref="@form" Validation="@(routeInputValidator.ValidateValue)" ValidationDelay="0" ReadOnly="!String.IsNullOrEmpty(Input.Id)">
+                        <MudCardContent>
+                            <MudTextField @bind-Value="Input.ShortName"
+                                          For="@(() => Input.ShortName)"
+                                          Immediate="true"
+                                          Label="Short name"/>
+
+                        </MudCardContent>
+                        <MudCardContent Class="pa-0">
+                            <MudTable Items="@Input.RouteStops.Take(1)" Hover="true" Breakpoint="Breakpoint.None" Dense="@true" Elevation="0">
+                                <HeaderContent>
+                                    <MudTh>Distance</MudTh>
+                                    <MudTh>Time</MudTh>
+                                    <MudTh>City</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Distance">
+                                        <MudForm Model="@context">
+                                            <MudTextField Label="Enter distance from previous stop"
+                                                          @bind-Value="context.KmFromPrevStop"
+                                                          For="(() => context.KmFromPrevStop)" ReadOnly="true"/>
+                                        </MudForm>
+                                    </MudTd>
+                                    <MudTd DataLabel="Time">
+                                        <MudForm Model="@context">
+                                            <MudTextField Label="Enter time from previous stop"
+                                                          @bind-Value="context.TimeFromPrevStop"
+                                                          For="(() => context.TimeFromPrevStop)" ReadOnly="true"/>
+                                        </MudForm>
+                                    </MudTd>
+                                    <MudTd DataLabel="City">
+                                        <MudForm Model="@context" Validation=@(stopInputValidator.ValidateValue)>
+                                            <MudAutocomplete T="City" Label="Enter city name" @bind-Value="@context.City" SearchFunc="@Search" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.Name ?? String.Empty" For="() => context.City"/>
+                                        </MudForm>
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                            <MudTable Items="@Input.RouteStops.Skip(1)" Hover="true" Breakpoint="Breakpoint.None" Dense="@true" Elevation="0">
+                                @*
+                        <HeaderContent>
+                            <MudTh>Distance</MudTh>
+                            <MudTh>Time</MudTh>
+                            <MudTh>City</MudTh>
+                        </HeaderContent>
+                        *@
+                                <RowTemplate>
+                                    <MudTd DataLabel="Distance">
+                                        <MudForm Model="@context" Validation=@(stopInputValidator.ValidateValue)>
+                                            <MudTextField Label="Enter distance from previous stop"
+                                                          @bind-Value="context.KmFromPrevStop"
+                                                          For="(() => context.KmFromPrevStop)"/>
+                                        </MudForm>
+                                    </MudTd>
+                                    <MudTd DataLabel="Time">
+                                        <MudForm Model="@context" Validation=@(stopInputValidator.ValidateValue)>
+                                            <MudTextField Label="Enter time from previous stop"
+                                                          @bind-Value="context.TimeFromPrevStop"
+                                                          For="(() => context.TimeFromPrevStop)"/>
+                                        </MudForm>
+                                    </MudTd>
+                                    <MudTd DataLabel="City">
+                                        <MudForm Model="@context" Validation=@(stopInputValidator.ValidateValue)>
+                                            <MudAutocomplete T="City" Label="Enter city name" @bind-Value="@context.City" SearchFunc="@Search" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.Name ?? String.Empty" For="() => context.City"/>
+                                        </MudForm>
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+
+                        </MudCardContent>
+                    </MudForm>
+                    <MudCardActions>
+                        @if (String.IsNullOrEmpty(Input.Id))
+                        {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(() => AddRouteStop())">Add stop</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(() => RemoveRouteStop())">Remove stop</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await AddRoute())">Add route</MudButton>
+                        }
+                    </MudCardActions>
+                </MudCard>
+                
+            </Authorized>
+        </AuthorizeView>
+    </MudItem>
+    <MudItem xs="6">
+        <MudDataGrid @ref="dataGrid" T="Route" ServerData="ReloadData" Filterable="false">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Routes</MudText>
+                <MudSpacer/>
+                <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="x => x.ShortName" Title="Route name"/>
+                <PropertyColumn Property="x => x.RouteStops.Count" Title="Number of stops"/>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudStack Row>
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => DeleteRoute(context.Item.Id)">Delete</MudButton>
+                    @if (context.Item.Id == Input.Id)
+                    {
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseRoute(null)">Cancel</MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseRoute(context.Item)">Select</MudButton>
+                    }
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Route"/>
+            </PagerContent>
+        </MudDataGrid>
+    </MudItem>
+</MudGrid>
+@code
+{
+    public MudDataGrid<Route> dataGrid;
+    public string? CurrentRoute;
+    private string? EndCursor;
+    private string? StartCursor;
+    private int curPage = 0;
+    public RouteInput Input = new();
+    public List<string> Errors = new List<string>();
+    public string? SearchString = null;
+    MudForm form;
+    public int totalNumberOfItems = 0;
+    protected async Task<GridData<Route>> ReloadData(GridState<Route> state)
+    {
+        int? first = null;
+        int? last = null;
+        string? before = null;
+        string? after = null;
+        if (state.Page == 0 || curPage == state.Page)
+        {
+            first = state.PageSize;
+        } else if (state.Page == totalNumberOfItems / state.PageSize)
+        {
+            last = totalNumberOfItems % state.PageSize;
+        } else if (curPage < state.Page)
+        {
+            first = state.PageSize;
+            after = EndCursor;
+        }
+        else
+        {
+            before = StartCursor;
+            first = null;
+            last = state.PageSize;
+        }
+        curPage = state.Page;
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        var sortInput = new List<RouteSortInput>();
+        if (sortDefinition is null || !sortDefinition.Descending)
+        {
+            sortInput.Add(new RouteSortInput()
+            {
+                ShortName = SortEnumType.Asc
+            });
+        }
+        else
+        {
+            sortInput.Add(new RouteSortInput()
+            {
+                ShortName = SortEnumType.Desc
+            });
+        }
+
+        RouteFilterInput? routeFilterInput = null;
+        if (!String.IsNullOrEmpty(SearchString))
+        {
+            routeFilterInput = new RouteFilterInput()
+            {
+                ShortName = new StringOperationFilterInput()
+                {
+                    Contains = SearchString
+                }
+            };
+        }
+        var results = await _BusTicketsClient.GetRoutes.ExecuteAsync(first, after, last, before, routeFilterInput, sortInput);
+        if (results.Data is null)
+        {
+            Errors.Clear();
+            foreach (var error in results.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+        }
+        var routes = results.Data?.Routes?.Edges?.Select(
+            e => new Route
+            {
+                Id = e.Node.Id,
+                ShortName = e.Node.ShortName,
+                RouteStops = e.Node.RouteStops.Select(rs => new RouteStop()
+                {
+                    City = new City()
+                    {
+                        Id = rs.City.Id,
+                        Name = rs.City.Name
+                    },
+                    Sequence = rs.Sequence,
+                    KmFromPrevStop = rs.KmFromPrevStop,
+                    TimeFromPrevStop = rs.TimeFromPrevStop
+                }).ToList()
+            }
+            ).ToArray();
+        EndCursor = results.Data?.Routes?.PageInfo.EndCursor;
+        StartCursor = results.Data?.Routes?.PageInfo.StartCursor;
+        totalNumberOfItems = results.Data?.Routes?.TotalCount ?? 0;
+        return new GridData<Route>()
+        {
+            TotalItems = results.Data?.Routes?.TotalCount ?? 0,
+            Items = routes ?? Enumerable.Empty<Route>()
+        };
+    }
+
+    public void ChooseRoute(Route? route)
+    {
+        Input.Id = route?.Id;
+        Input.ShortName = route?.ShortName;
+        Input.RouteStops = route?.RouteStops.Select(rs => new RouteStopInput()
+        {
+            City = rs.City,
+            KmFromPrevStop = rs.KmFromPrevStop,
+            TimeFromPrevStop = (int)rs.TimeFromPrevStop.TotalMinutes
+        }).ToList() ?? new List<RouteStopInput>()
+        {
+            new RouteStopInput(),
+            new RouteStopInput()
+        };
+    }
+
+    private Task OnSearch(string text)
+    {
+        SearchString = text;
+        return dataGrid.ReloadServerData();
+    }
+    
+    private async Task DeleteRoute(string routeId)
+    {
+        var result = await _BusTicketsClient.DeleteRoute.ExecuteAsync(routeId);
+        Errors.Clear();
+        if (result.Errors.Count > 0)
+        {
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+            return;
+        }
+
+        if (result.Data?.RemoveRoute.Errors is not null)
+        {
+            foreach (var error in result.Data.RemoveRoute.Errors)
+            {
+                if (error is IDeleteRoute_RemoveRoute_Errors_RouteIsUsedInTimetableError castedError)
+                {
+                    Errors.Add(castedError.Message);
+                }
+            }
+            return;
+        }
+
+        if (result.Data.RemoveRoute.Boolean == true)
+        {
+            await dataGrid.ReloadServerData();
+        }
+    }
+
+
+    private async Task AddRoute()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            return;
+        }
+       var result = await _BusTicketsClient.AddRoute.ExecuteAsync(Input.ShortName, Input.RouteStops.Select(rs => new BusTicketsApp.Client.RouteStopInput()
+       {
+           CityId = rs.City.Id,
+           KmFromPrevStop = rs.KmFromPrevStop,
+           TimeFromPrevStop = TimeSpan.FromMinutes(rs.TimeFromPrevStop)
+       }).ToList());
+       if (result.Errors.Count == 0)
+       {
+            ChooseRoute(null);
+            await dataGrid.ReloadServerData();
+       }
+       else
+       {
+           Errors.Clear();
+           foreach (var error in result.Errors)
+           {
+               Errors.Add(error.Message);
+           }
+       }
+    }
+
+    private async Task<IEnumerable<City>> Search(string value, CancellationToken cancellationToken)
+    {
+        if (String.IsNullOrEmpty(value) || value.Length < 3)
+        {
+            return Enumerable.Empty<City>();
+        }
+        var routeFilterInput = new CityFilterInput()
+        {
+            Name = new StringOperationFilterInput()
+            {
+                Contains = value
+            }
+        };
+        var sortInput = new List<CitySortInput>()
+        {
+            new CitySortInput()
+            {
+                Name = SortEnumType.Asc
+            }
+        };
+        var result = await _BusTicketsClient.GetCities.ExecuteAsync(10, null, null, null, routeFilterInput, sortInput, cancellationToken);
+        return result?.Data?.Cities?.Edges?.Select(c => new City()
+        {
+            Id = c.Node.Id,
+            Name = c.Node.Name
+        }) ?? Enumerable.Empty<City>();
+
+    }
+
+    public void AddRouteStop()
+    {
+        if (Input.RouteStops.Count < 10)
+        {
+            Input.RouteStops.Add(new RouteStopInput());
+        }
+    }
+
+    public void RemoveRouteStop()
+    {
+        if (Input.RouteStops.Count > 2)
+        {
+            Input.RouteStops.RemoveAt(Input.RouteStops.Count - 1);
+        }
+    }
+    
+
+    public record RouteInput
+    {
+        public string? Id { get; set; }
+        public string? ShortName { get; set; }
+
+        public List<RouteStopInput> RouteStops { get; set; } = new List<RouteStopInput>()
+        {
+            new RouteStopInput(),
+            new RouteStopInput()
+        };
+
+    }
+
+    public record RouteStopInput
+    {
+        public City? City { get; set; }
+        public int KmFromPrevStop { get; set; }
+        public int TimeFromPrevStop { get; set; }
+    }
+
+    RouteInputValidator routeInputValidator = new RouteInputValidator();
+    RouteStopInputValidator stopInputValidator = new RouteStopInputValidator();
+
+
+    public class RouteInputValidator : AbstractValidator<RouteInput>
+    {
+        public RouteInputValidator()
+        {
+            RuleFor(x => x.ShortName)
+                .NotEmpty()
+                .Length(1,100);
+
+            //RuleForEach(x => x.RouteStops)
+            //    .SetValidator(new RouteStopInputValidator());
+        }
+
+
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<RouteInput>.CreateWithOptions((RouteInput)model, x => x.IncludeProperties(propertyName)));
+            if (result.IsValid)
+                return Array.Empty<string>();
+            return result.Errors.Select(e => e.ErrorMessage);
+        };
+    }
+
+    public class RouteStopInputValidator : AbstractValidator<RouteStopInput>
+    {
+        public RouteStopInputValidator()
+        {
+            RuleFor(x => x.KmFromPrevStop)
+                .GreaterThanOrEqualTo(1).WithMessage("Number of kilometers cannot be less than 1");
+            RuleFor(x => x.TimeFromPrevStop)
+                .GreaterThanOrEqualTo(1).WithMessage("Number of kilometers cannot be less than 1");
+
+            RuleFor(x => x.City)
+                .NotNull().WithMessage("Choose city for the stop");
+        }
+
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<RouteStopInput>.CreateWithOptions((RouteStopInput)model, x => x.IncludeProperties(propertyName)));
+            if (result.IsValid)
+                return Array.Empty<string>();
+            return result.Errors.Select(e => e.ErrorMessage);
+        };
+    }
+}

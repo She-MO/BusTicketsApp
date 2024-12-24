@@ -22,4 +22,12 @@
     <_ContentIncludedByDefault Remove="Layout\NavMenu.razor" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Models\AggregatedData\RouteAggregatedData.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\AggregatedData\" />
+  </ItemGroup>
+
 </Project>

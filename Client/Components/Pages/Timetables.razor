@@ -1,0 +1,345 @@
+﻿@page "/timetables"
+@using System.Collections
+@using System.ComponentModel.DataAnnotations
+@using BusTicketsApp.Client
+@using Client.Models
+@using Microsoft.AspNetCore.Authorization
+@using DayOfWeek = System.DayOfWeek
+@inject BusTicketsAppClient _BusTicketsClient;
+@*
+@attribute [Authorize(Policy = "IsAdmin")]
+*@
+
+<PageTitle>Timetables</PageTitle>
+
+<AuthorizeView Policy="IsManagerOrAdmin">
+    <Authorized Context="authContext">
+        <EditForm Model="@Input" OnValidSubmit="AddTimetable">
+            <DataAnnotationsValidator/>
+            <MudGrid>
+                <MudItem xs="12" sm="12">
+                    <MudCard>
+                        <MudCardContent>
+                            @foreach (var message in Errors ?? Enumerable.Empty<string>())
+                            {
+                            <MudAlert Severity="Severity.Error">@message</MudAlert>
+                            }
+                            <MudAutocomplete T="Route" Label="Route" @bind-Value="Input.Route" SearchFunc="@Search" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.ShortName ?? String.Empty" For="() => Input.Route"/>
+                            <MudTextField T="string" Label="Time of departure"
+                                          @bind-Value="Input.TimeOfDeparture" For="@(() => Input.TimeOfDeparture)" InputType="InputType.Time" Variant="Variant.Outlined"/>
+                            <MudSelect @bind-Value="Input.DayOfWeek" Variant="Variant.Outlined">
+                                @foreach (BusTicketsApp.Client.DayOfWeek day in Enum.GetValues(typeof(BusTicketsApp.Client.DayOfWeek)))
+                                {
+                                <MudSelectItem Value="day">@day.ToString()</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudCardContent>
+                        <MudCardActions>
+                            @if (CurrentTimetable is not null)
+                            {
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
+                            }
+                            else
+                            {
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+                            }
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+        
+    </Authorized>
+</AuthorizeView>
+<MudDataGrid @ref="dataGrid" T="Timetable" ServerData="ReloadData" Filterable="false">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Timetables</MudText>
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <Columns>
+        <HierarchyColumn T="Timetable"/>
+        <PropertyColumn Property="x => x.Route.ShortName" Title="Route name"/>
+        <PropertyColumn Property="x => x.TimeOfDeparture" Title="Time of departure"/>
+        <PropertyColumn Property="x => x.TimeOfArrival" Title="Time of arrival"/>
+        <PropertyColumn Property="x => TimeSpan.FromTicks(x.Route.RouteStops.Sum(rs => rs.TimeFromPrevStop.Ticks)).ToString()" Title="Trip duration"/>
+        <PropertyColumn Property="x => x.DayOfWeek.ToString()" Title="Day of week"/>
+        <AuthorizeView Policy="IsManagerOrAdmin">
+            <Authorized>
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate Context="cellContext">
+                        <MudStack Row>
+                            <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => DeleteTimetable(cellContext.Item.Id)">Delete</MudButton>
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Authorized>
+        </AuthorizeView>
+    </Columns>
+    <ChildRowContent>
+        <MudText>@String.Join(" - ", context.Item.Route.RouteStops.Select(rs => rs.City.Name))</MudText>
+    </ChildRowContent>
+    <PagerContent>
+        <MudDataGridPager T="Timetable" />
+    </PagerContent>
+</MudDataGrid>
+@code
+{
+    public MudDataGrid<Timetable> dataGrid;
+    public string? CurrentTimetable;
+    public bool success;
+    public string? error;
+    private string? EndCursor;
+    private string? StartCursor;
+    private int curPage = 0;
+    public int totalNumberOfItems = 0;
+    public TimetableInput Input = new();
+    public Carrier? CarrierInput = new Carrier()
+    {
+        Id = String.Empty,
+        Name = String.Empty
+    };
+    public List<string> Errors = [];
+    public string? SearchString = null;
+    protected async Task<GridData<Timetable>> ReloadData(GridState<Timetable> state)
+    {
+        int? first = null;
+        int? last = null;
+        string? before = null;
+        string? after = null;
+        if (state.Page == 0 || curPage == state.Page)
+        {
+            first = state.PageSize;
+        } else if (state.Page == totalNumberOfItems / state.PageSize)
+        {
+            last = totalNumberOfItems % state.PageSize;
+        } else if (curPage < state.Page)
+        {
+            first = state.PageSize;
+            after = EndCursor;
+        }
+        else
+        {
+            before = StartCursor;
+            first = null;
+            last = state.PageSize;
+        }
+        curPage = state.Page;
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        var sortInput = new List<TimetableSortInput>();
+        /*
+        if (sortDefinition is null || !sortDefinition.Descending)
+        {
+            sortInput.Add(new TimetableSortInput()
+            {
+                Route = new RouteSortInput()
+                {
+                    ShortName = SortEnumType.Asc
+                }
+            });
+        }
+        else
+        {
+            sortInput.Add(new TimetableSortInput()
+            {
+                Route = new RouteSortInput()
+                {
+                    ShortName = SortEnumType.Desc
+                }
+            });
+        }
+        */
+        sortInput.Add(new TimetableSortInput()
+        {
+            //DayOfWeek = SortEnumType.Asc,
+            TimeOfDeparture = SortEnumType.Asc
+        });
+
+        TimetableFilterInput? timetableFilterInput = null;
+        if (!String.IsNullOrEmpty(SearchString))
+        {
+            timetableFilterInput = new TimetableFilterInput()
+            {
+                Route = new RouteFilterInput()
+                {
+                    Or = new []
+                    {
+                        new RouteFilterInput()
+                        {
+                            ShortName = new StringOperationFilterInput()
+                            {
+                                Contains = SearchString
+                            }
+                            
+                        },
+                        new RouteFilterInput()
+                        {
+                            RouteStops = new ListFilterInputTypeOfRouteStopFilterInput()
+                            {
+                                Some = new RouteStopFilterInput()
+                                {
+                                    City = new CityFilterInput()
+                                    {
+                                        Name = new StringOperationFilterInput()
+                                        {
+                                            Contains = SearchString
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+            };
+        }
+        var results = await _BusTicketsClient.GetTimetables.ExecuteAsync(first, after, last, before, timetableFilterInput, sortInput);
+        if (results.Data is null)
+        {
+            error = results.Errors[0].Message;
+        }
+        var carriers = results.Data?.Timetables?.Edges?.Select(
+            e => new Timetable
+            {
+                Id = e.Node.Id,
+                TimeOfDeparture = TimeOnly.FromTimeSpan(e.Node.TimeOfDeparture),
+                TimeOfArrival = TimeOnly.FromTimeSpan(e.Node.TimeOfArrival),
+                DayOfWeek = Enum.Parse<DayOfWeek>(e.Node.DayOfWeek.ToString()),
+                Route = new Route()
+                {
+                    Id = e?.Node?.Route?.Id ?? String.Empty,
+                    ShortName = e?.Node?.Route?.ShortName ?? String.Empty,
+                    RouteStops = e.Node.Route.RouteStops.Select(rs => new RouteStop()
+                    {
+                        TimeFromPrevStop = rs.TimeFromPrevStop,
+                        City = new City()
+                        {
+                            Id = rs.City.Id,
+                            Name = rs.City.Name
+                        }
+                    }).ToList()
+                }
+            }
+            ).ToArray();
+        EndCursor = results.Data?.Timetables?.PageInfo.EndCursor;
+        StartCursor = results.Data?.Timetables?.PageInfo.StartCursor;
+        totalNumberOfItems = results.Data?.Timetables?.TotalCount ?? 0;
+        //ChooseTimetable(null);
+        return new GridData<Timetable>()
+        {
+            TotalItems = results.Data?.Timetables?.TotalCount ?? 0,
+            Items = carriers ?? Enumerable.Empty<Timetable>()
+        };
+    }
+
+    public void ChooseTimetable(Timetable? timetable)
+    {
+        Input.Id = timetable?.Id;
+        Input.TimeOfDeparture = timetable?.TimeOfDeparture.ToString() ?? String.Empty;
+        Input.Route = timetable?.Route;
+        Input.DayOfWeek = (timetable is not null) ? Enum.Parse<BusTicketsApp.Client.DayOfWeek>(timetable.DayOfWeek.ToString()) : BusTicketsApp.Client.DayOfWeek.Monday;
+    }
+
+    private Task OnSearch(string text)
+    {
+        SearchString = text;
+        return dataGrid.ReloadServerData();
+    }
+    private async Task DeleteTimetable(string timetableId)
+    {
+        var result = await _BusTicketsClient.DeleteTimetable.ExecuteAsync(timetableId);
+        Errors.Clear();
+        if (result.Errors.Count > 0)
+        {
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+            return;
+        }
+
+        if (result.Data?.RemoveTimetable.Errors is not null)
+        {
+            foreach (var error in result.Data.RemoveTimetable.Errors)
+            {
+                if (error is IDeleteTimetable_RemoveTimetable_Errors_TimetableUsedInTripError castedError)
+                {
+                    Errors.Add(castedError.Message);
+                }
+            }
+            return;
+        }
+
+        if (result.Data.RemoveTimetable.Boolean == true)
+        {
+            await dataGrid.ReloadServerData();
+        }
+    }
+
+
+    private async Task AddTimetable()
+    {
+        var result = await _BusTicketsClient.AddTimetable.ExecuteAsync(Input.Route.Id, TimeSpan.Parse(Input.TimeOfDeparture), Input.DayOfWeek);
+        if (result.Errors.Count == 0 && result.Data?.AddTimetable.Timetable is not null)
+        {
+            ChooseTimetable(null);
+            await dataGrid.ReloadServerData();
+        }
+        else
+        {
+            Errors.Clear();
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+            foreach (var error in result.Data.AddTimetable.Errors ?? Enumerable.Empty<IAddTimetable_AddTimetable_Errors>())
+            {
+                if (error is IAddTimetable_AddTimetable_Errors_TimetableWithThisSettingsAlreadyExists castedError)
+                {
+                    Errors.Add(castedError.Message);
+                }
+            }
+        }
+    }
+
+    private async Task<IEnumerable<Route>> Search(string value, CancellationToken cancellationToken)
+    {
+        if (String.IsNullOrEmpty(value) || value.Length < 3)
+        {
+            return Enumerable.Empty<Route>();
+        }
+        var routeFilterInput = new RouteFilterInput()
+        {
+            ShortName = new StringOperationFilterInput()
+            {
+                Contains = value
+            }
+        };
+        var sortInput = new List<RouteSortInput>()
+        {
+            new RouteSortInput()
+            {
+                ShortName = SortEnumType.Asc
+            }
+        };
+        var result = await _BusTicketsClient.GetRoutes.ExecuteAsync(10, null, null, null, routeFilterInput, sortInput, cancellationToken);
+        return result?.Data?.Routes?.Edges?.Select(c => new Route()
+        {
+            Id = c.Node.Id,
+            ShortName = c.Node.ShortName
+        }) ?? Enumerable.Empty<Route>();
+
+    }
+
+    public record TimetableInput
+    {
+        public string? Id { get; set; }
+        [Required]
+        public string? TimeOfDeparture  { get; set; }
+        [Required]
+        public Route? Route { get; set; }
+        [Required]
+        public BusTicketsApp.Client.DayOfWeek DayOfWeek { get; set; }
+    }
+}

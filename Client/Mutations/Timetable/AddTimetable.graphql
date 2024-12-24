@@ -1,0 +1,24 @@
+﻿mutation AddTimetable($routeId: ID!, $timeOfDeparture: TimeSpan!, $dayOfWeek: DayOfWeek!) {
+    addTimetable(input: {
+        routeId: $routeId
+        timeOfDeparture: $timeOfDeparture
+        dayOfWeek: $dayOfWeek
+    }) {
+        timetable {
+            id
+            routeId
+            timeOfDeparture
+            timeOfArrival
+            dayOfWeek
+            route {
+                id
+                shortName
+            }
+        }
+        errors {
+            ...on   Error {
+                message
+            }
+        }
+    }
+}

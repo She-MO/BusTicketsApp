@@ -1,0 +1,20 @@
+mutation BuyTickets($tripId: ID!, $fromCityId: ID!, $toCityId: ID!, $numberOfPassengers: Int!) {
+    buyTicket(input: {
+        tripId: $tripId
+        fromCityId: $fromCityId
+        toCityId: $toCityId
+        numberOfPassengers: $numberOfPassengers
+    }) {
+        ticket {
+            id
+            trip {
+                id
+            }
+        }
+        errors {
+            ... on Error {
+                message
+            }
+        }
+    }
+}

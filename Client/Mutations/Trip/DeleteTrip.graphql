@@ -1,0 +1,7 @@
+﻿mutation DeleteTrip($tripId: ID!) {
+    removeTrip(input: {
+        tripId: $tripId
+    }) {
+        boolean
+    }
+}

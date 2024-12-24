@@ -1,0 +1,12 @@
+﻿mutation DeleteCity($cityId: ID!) {
+    removeCity(input: {
+        id: $cityId
+    }) {
+        boolean
+        errors {
+            ...on Error {
+                message
+            }
+        }
+    }
+}

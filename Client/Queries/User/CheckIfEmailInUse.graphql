@@ -1,0 +1,3 @@
+﻿query CheckIfEmailInUse($email: String!) {
+    checkIfEmailInUse(email: $email)
+}

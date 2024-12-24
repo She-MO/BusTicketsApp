@@ -1,0 +1,23 @@
+﻿query TripsDataByMonthsOfYear($year: Int!) {
+    tripsDataByMonthsOfYear(
+        year: $year
+    ) {
+        month
+        numberOfTickets
+        numberOfTrips
+        numberOfPassengers
+        totalIncome
+        averagePrice
+    }
+}
+query TripsDataByYears {
+    tripsDataByYears
+    {
+        year
+        numberOfTickets
+        numberOfTrips
+        numberOfPassengers
+        totalIncome
+        averagePrice
+    }
+}

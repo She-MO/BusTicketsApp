@@ -1,0 +1,89 @@
+﻿@using Client.Components.Pages
+@using Client.Models
+@using Microsoft.AspNetCore.Authorization
+@inject ISnackbar Snackbar
+@inject BusTicketsAppClient BusTicketsClient
+@attribute [Authorize]
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @*
+            <MudIcon Icon="@Icons.Material.Filled." Class="mr-3 mb-n1"/>
+            *@
+            Buy ticket?
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @foreach (var message in Errors ?? Enumerable.Empty<string>())
+        { 
+            <MudAlert Severity="Severity.Error">@message</MudAlert>
+        }
+        <MudTextField Value="@Input.StartCity.Name" Label="From" ReadOnly="true" Variant="Variant.Outlined"/>
+        <MudTextField Value="@Input.EndCity.Name" Label="To" ReadOnly="true" Variant="Variant.Outlined"/>
+        <MudTextField T="DateTime" Format="s" Value="@Trip.DepartureDateTime" Label="Departure date and time" ReadOnly="true" Variant="Variant.Outlined" InputType="InputType.DateTimeLocal"/>
+        <MudTextField T="DateTime" Format="s" Value="@Trip.ArrivalDateTime" Label="Arrival date and time" ReadOnly="true" Variant="Variant.Outlined" InputType="InputType.DateTimeLocal"/>
+        <MudTextField Value="@Trip.Price" Label="Total price" ReadOnly="true" Variant="Variant.Outlined"/>
+        <MudTextField Value="@Input.NumberOfPassengers" Label="Number of passengers" ReadOnly="true" Variant="Variant.Outlined"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton OnClick="BuyTicket">Buy ticket</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public Trip Trip { get; set; } = new Trip();
+    [Parameter]
+    public Home.FindTripInput Input { get; set; } = new ();
+
+    public List<string> Errors { get; set; } = new();
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task BuyTicket()
+    {
+        var result = await BusTicketsClient.BuyTickets.ExecuteAsync(Trip.Id, Input.StartCity.Id, Input.EndCity.Id, Input.NumberOfPassengers);
+        Errors.Clear();
+        if (result.Errors.Count > 0)
+        {
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+
+            return;
+        }
+
+        if (result.Data?.BuyTicket.Errors is not null)
+        {
+            foreach (var error in result.Data.BuyTicket.Errors)
+            {
+                if (error is IBuyTickets_BuyTicket_Errors_IncorrectCitySequence castedError1)
+                {
+                    Errors.Add(castedError1.Message);
+                }
+
+                if (error is IBuyTickets_BuyTicket_Errors_NotEnoughSeatsError castedError2)
+                {
+                    Errors.Add(castedError2.Message);
+                }
+
+                if (error is IBuyTickets_BuyTicket_Errors_OneOfTheCitiesIsNotPartOfTheRouteError castedError3)
+                {
+                    Errors.Add(castedError3.Message);
+                }
+
+            }
+
+            return;
+        }
+
+        //In a real world scenario this bool would probably be a service to delete the item from api/database
+        //Snackbar.Add("Server Deleted", Severity.Success);
+        MudDialog.Close();
+    }
+
+}

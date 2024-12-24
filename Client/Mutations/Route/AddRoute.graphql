@@ -1,0 +1,20 @@
+﻿mutation AddRoute($shortName: String!, $stops: [RouteStopInput!]!) {
+    addRoute(input: {
+        shortName: $shortName
+        stops: $stops
+    }) {
+        route {
+            id
+            lengthInKm
+            shortName
+            routeStops {
+                timeFromPrevStop
+                kmFromPrevStop
+                city {
+                    id
+                    name
+                }
+            }
+        }
+    }
+}

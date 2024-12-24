@@ -1,0 +1,40 @@
+﻿query FindTrips($date: Date!, $fromCityId: ID!, $toCityId: ID!, $numberOfPassengers: Int!) {
+    findTrips (
+        input: {
+            date: $date
+            fromCityId: $fromCityId
+            toCityId: $toCityId
+            numberOfPassengers: $numberOfPassengers
+        }
+    ) {
+        id
+        timetable {
+            timeOfDeparture
+            timeOfArrival
+            dayOfWeek
+            route {
+                id
+                shortName
+                routeStops {
+                    kmFromPrevStop
+                    timeFromPrevStop
+                    city {
+                        id
+                        name
+                    }
+                    sequence
+                }
+            }
+        }
+        bus {
+            id
+            busNumber
+        }
+        date
+        pricePerKm
+        tripSeats {
+            sequence
+            availableSeats
+        }
+    }
+}

@@ -1,0 +1,34 @@
+﻿query GetRoutes($first: Int, $after: String, $last: Int, $before: String, $where: RouteFilterInput, $order: [RouteSortInput!]) {
+    routes (
+        first: $first
+        last: $last
+        before: $before
+        after: $after
+        order: $order
+        where: $where
+    ) {
+        edges {
+            node {
+                id
+                shortName
+                routeStops {
+                    city {
+                        id
+                        name
+                    }
+                    cityId
+                    sequence
+                    kmFromPrevStop
+                    timeFromPrevStop
+                }
+            }
+        }
+        pageInfo {
+            startCursor
+            endCursor
+            hasPreviousPage
+            hasNextPage
+        }
+        totalCount
+    }
+}

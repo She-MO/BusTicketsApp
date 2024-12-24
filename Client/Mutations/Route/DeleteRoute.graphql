@@ -1,0 +1,12 @@
+﻿mutation DeleteRoute($routeId: ID!) {
+    removeRoute(input: {
+        id: $routeId
+    }) {
+        boolean
+        errors {
+            ...on Error {
+                message
+            }
+        }
+    }
+}

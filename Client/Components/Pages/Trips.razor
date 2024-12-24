@@ -1,0 +1,407 @@
+﻿@page "/trips"
+@using System.Collections
+@using System.ComponentModel.DataAnnotations
+@using BusTicketsApp.Client
+@using Client.Models
+@using Microsoft.AspNetCore.Authorization
+@using DayOfWeek = System.DayOfWeek
+@inject BusTicketsAppClient _BusTicketsClient;
+@attribute [Authorize(Policy = "IsManagerOrAdmin")]
+
+<PageTitle>Trips</PageTitle>
+
+<EditForm Model="@Input" OnValidSubmit="AddTrip">
+    <DataAnnotationsValidator/>
+    <MudGrid>
+        <MudItem xs="12" sm="12">
+            <MudCard>
+                <MudCardContent>
+                    @foreach (var message in Errors ?? Enumerable.Empty<string>())
+                    {
+                        <MudAlert Severity="Severity.Error">@message</MudAlert>
+                    }
+                    <MudAutocomplete T="Timetable" Label="Timetable" @bind-Value="Input.Timetable" SearchFunc="@SearchTimetable" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => TimetableToString(c)" For="() => Input.Timetable"/>
+                    <MudAutocomplete T="Bus" Label="Bus" @bind-Value="Input.Bus" SearchFunc="@SearchBus" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => BusToString(c)" For="() => Input.Bus"/>
+                    <MudTextField T="DateTime" Format="yyyy-MM-dd" Label="Date"  InputType="InputType.Date" @bind-Value="Input.Date" For="() => Input.Date" Variant="Variant.Outlined"/>
+                    <MudNumericField @bind-Value="Input.PricePerKm" Label="Price per km" Variant="Variant.Outlined" Step=".1M" For="() => Input.PricePerKm"/>
+                </MudCardContent>
+                <MudCardActions>
+                    @if (CurrentTrip is not null)
+                    {
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
+                    }
+                    else
+                    {
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+                    }
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+<MudDataGrid @ref="dataGrid" T="Trip" ServerData="ReloadData" Filterable="false">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Trips</MudText>
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.Timetable.Route.ShortName" Title="Route name"/>
+        <PropertyColumn Property="x => x.Timetable.TimeOfDeparture" Title="Time of departure"/>
+        <PropertyColumn Property="x => x.Timetable.TimeOfArrival" Title="Time of arrival"/>
+        <PropertyColumn Property="@(x => x.DepartureDateTime.ToString("d"))" Title="Date"/>
+        <PropertyColumn Property="x => x.PricePerKm" Title="Price per km"/>
+        <PropertyColumn Property="x => x.Bus.BusNumber" Title="Bus number"/>
+        <PropertyColumn Property="x => x.Bus.NumberOfSeats" Title="Number of seats"/>
+        <PropertyColumn Property="x => x.Bus.Carrier.Name" Title="Carrier name"/>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudStack Row>
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => DeleteTrip(context.Item.Id)">Delete</MudButton>
+                    @*
+                    @if (context.Item.Id == CarrierInput.Id)
+                    {
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseTrip(null)">Deselect</MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseTrip(context.Item)">Select</MudButton>
+                    }
+                *@
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Trip"/>
+    </PagerContent>
+</MudDataGrid>
+@code
+{
+    public MudDataGrid<Trip> dataGrid;
+    public string? CurrentTrip;
+    public bool success;
+    public string? error;
+    private string? EndCursor;
+    private string? StartCursor;
+    private int curPage = 0;
+    public int totalNumberOfItems = 0;
+    public TripInput Input = new();
+    public Carrier? CarrierInput = new Carrier()
+    {
+        Id = String.Empty,
+        Name = String.Empty
+    };
+    public List<string> Errors = [];
+    public string? SearchString = null;
+    protected async Task<GridData<Trip>> ReloadData(GridState<Trip> state)
+    {
+        int? first = null;
+        int? last = null;
+        string? before = null;
+        string? after = null;
+        if (state.Page == 0 || curPage == state.Page)
+        {
+            first = state.PageSize;
+        } else if (state.Page == totalNumberOfItems / state.PageSize)
+        {
+            last = totalNumberOfItems % state.PageSize;
+        } else if (curPage < state.Page)
+        {
+            first = state.PageSize;
+            after = EndCursor;
+        }
+        else
+        {
+            before = StartCursor;
+            first = null;
+            last = state.PageSize;
+        }
+        curPage = state.Page;
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        var sortInput = new List<TripSortInput>();
+        /*
+        if (sortDefinition is null || !sortDefinition.Descending)
+        {
+            sortInput.Add(new TripSortInput()
+            {
+                Route = new RouteSortInput()
+                {
+                    ShortName = SortEnumType.Asc
+                }
+            });
+        }
+        else
+        {
+            sortInput.Add(new TripSortInput()
+            {
+                Route = new RouteSortInput()
+                {
+                    ShortName = SortEnumType.Desc
+                }
+            });
+        }
+        */
+        sortInput.Add(new TripSortInput()
+        {
+            Date = SortEnumType.Asc
+        });
+
+        TripFilterInput? tripFilterInput = null;
+        if (!String.IsNullOrEmpty(SearchString))
+        {
+            tripFilterInput = new TripFilterInput()
+            {
+                Timetable = new TimetableFilterInput()
+                {
+                    Route = new RouteFilterInput()
+                    {
+                        ShortName = new StringOperationFilterInput()
+                        {
+                            Contains = SearchString
+                        }
+                    }
+                    
+                }
+            };
+        }
+        var results = await _BusTicketsClient.GetTrips.ExecuteAsync(first, after, last, before, tripFilterInput, sortInput);
+        Errors.Clear();
+        if (results.Data is null)
+        {
+            foreach (var error in results.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+        }
+        var carriers = results.Data?.Trips?.Edges?.Select(
+            e => new Trip
+            {
+                Id = e.Node.Id,
+                Timetable = new Timetable()
+                {
+                    TimeOfArrival = TimeOnly.FromTimeSpan(e.Node.Timetable.TimeOfArrival),
+                    TimeOfDeparture = TimeOnly.FromTimeSpan(e.Node.Timetable.TimeOfDeparture),
+                    DayOfWeek = Enum.Parse<DayOfWeek>(e.Node.Timetable.DayOfWeek.ToString()),
+                    Route = new Route()
+                    {
+                        Id = e.Node.Timetable.Route.Id,
+                        ShortName = e.Node.Timetable.Route.ShortName
+                    }
+                },
+                PricePerKm = e.Node.PricePerKm,
+                DepartureDateTime = e.Node.Date,
+                Bus = new Bus
+                {
+                    Id = e.Node.Bus.Id,
+                    BusNumber = e.Node.Bus.BusNumber,
+                    NumberOfSeats = e.Node.Bus.NumberOfSeats,
+                    Carrier = new Carrier
+                    {
+                        Id = e.Node.Bus.Carrier.Id,
+                        Name = e.Node.Bus.Carrier.Name
+                    }
+                }
+            }
+            ).ToArray();
+        EndCursor = results.Data?.Trips?.PageInfo.EndCursor;
+        StartCursor = results.Data?.Trips?.PageInfo.StartCursor;
+        //ChooseTrip(null);
+        totalNumberOfItems = results.Data?.Trips?.TotalCount ?? 0;
+        return new GridData<Trip>()
+        {
+            TotalItems = results.Data?.Trips?.TotalCount ?? 0,
+            Items = carriers ?? Enumerable.Empty<Trip>()
+        };
+    }
+
+    public void ChooseTrip(Trip? trip)
+    {
+        Input.Id = trip?.Id;
+        Input.Timetable = trip?.Timetable;
+        Input.Date = trip?.ArrivalDateTime.Date ?? DateTime.Today;
+        Input.Bus = trip?.Bus;
+        Input.PricePerKm = trip?.PricePerKm ?? 0;
+    }
+
+    private Task OnSearch(string text)
+    {
+        SearchString = text;
+        return dataGrid.ReloadServerData();
+    }
+
+    private async Task DeleteTrip(string tripId)
+    {
+        var result = await _BusTicketsClient.DeleteTrip.ExecuteAsync(tripId);
+        Errors.Clear();
+        if (result.Errors.Count > 0)
+        {
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+            return;
+        }
+
+        /*
+        if (result.Data?.RemoveTimetable.Errors is not null)
+        {
+            foreach (var error in result.Data.RemoveTimetable.Errors)
+            {
+                if (error is IDeleteTimetable_RemoveTimetable_Errors_TimetableUsedInTripError castedError)
+                {
+                    Errors.Add(castedError.Message);
+                }
+            }
+            return;
+        }
+        */
+
+        if (result.Data.RemoveTrip.Boolean == true)
+        {
+            await dataGrid.ReloadServerData();
+        }
+    }
+
+    private async Task AddTrip()
+    {
+        Errors.Clear();
+        var result = await _BusTicketsClient.AddTrip.ExecuteAsync(Input.Bus.Id, Input.Timetable.Id, Input.Date, Input.PricePerKm);
+        if (result.Errors.Count == 0 && result.Data?.AddTrip.Trip is not null)
+        {
+            ChooseTrip(null);
+            await dataGrid.ReloadServerData();
+        }
+        else
+        {
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+            foreach (var error in result.Data.AddTrip.Errors ?? Enumerable.Empty<IAddTrip_AddTrip_Errors>())
+            {
+                if (error is IAddTrip_AddTrip_Errors_TripWithThisSettingsAlreadyExists castedError)
+                {
+                    Errors.Add(castedError.Message);
+                }
+            }
+        }
+    }
+
+    private async Task<IEnumerable<Timetable>> SearchTimetable(string value, CancellationToken cancellationToken)
+    {
+        if (String.IsNullOrEmpty(value) || value.Length < 3)
+        {
+            return Enumerable.Empty<Timetable>();
+        }
+        var timetableFilterInput = new TimetableFilterInput()
+        {
+            Route = new RouteFilterInput()
+            {
+                ShortName = new StringOperationFilterInput()
+                {
+                    Contains = value
+                }
+            }
+        };
+        var sortInput = new List<TimetableSortInput>()
+        {
+            new TimetableSortInput()
+            {
+                TimeOfDeparture = SortEnumType.Asc
+            }
+        };
+        var result = await _BusTicketsClient.GetTimetables.ExecuteAsync(10, null, null, null, timetableFilterInput, sortInput, cancellationToken);
+        return result?.Data?.Timetables?.Edges?.Select(c => new Timetable()
+        {
+            Id = c.Node.Id,
+            TimeOfDeparture = TimeOnly.FromTimeSpan(c.Node.TimeOfDeparture),
+            TimeOfArrival = TimeOnly.FromTimeSpan(c.Node.TimeOfArrival),
+            Route = new Route()
+            {
+                Id = c.Node.Route.Id,
+                ShortName = c.Node.Route.ShortName
+            },
+            DayOfWeek = Enum.Parse<DayOfWeek>(c.Node.DayOfWeek.ToString()),
+        }) ?? Enumerable.Empty<Timetable>();
+    }
+private async Task<IEnumerable<Bus>> SearchBus(string value, CancellationToken cancellationToken)
+{
+    if (String.IsNullOrEmpty(value) || value.Length < 2)
+    {
+        return Enumerable.Empty<Bus>();
+    }
+    var busFilterInput = new BusFilterInput()
+    {
+        Or = new []
+        {
+            new BusFilterInput()
+            {
+                Carrier = new CarrierFilterInput()
+                {
+                    Name = new StringOperationFilterInput()
+                    {
+                        Contains = value
+                    }
+                }
+            },
+            new BusFilterInput()
+            {
+                BusNumber = new StringOperationFilterInput()
+                {
+                    Contains = value
+                }
+            }
+        }
+    };
+    var sortInput = new List<BusSortInput>()
+    {
+        new BusSortInput()
+        {
+            BusNumber = SortEnumType.Asc
+        }
+    };
+    var result = await _BusTicketsClient.GetBuses.ExecuteAsync(10, null, null, null, busFilterInput, sortInput, cancellationToken);
+    return result?.Data?.Buses?.Edges?.Select(c => new Bus()
+    {
+        Id = c.Node.Id,
+        BusNumber = c.Node.BusNumber,
+        NumberOfSeats = c.Node.NumberOfSeats,
+        Carrier = new Carrier
+        {
+            Id = c.Node.Carrier.Id,
+            Name = c.Node.Carrier.Name
+        }
+    }) ?? Enumerable.Empty<Bus>();
+
+}
+
+public string TimetableToString(Timetable? t)
+{
+    return (t is not null) ? t.Route.ShortName + ' ' + t.TimeOfDeparture + ' ' + t.DayOfWeek.ToString() : String.Empty;
+}
+
+public string BusToString(Bus? b)
+{
+    return (b is not null) ? b.Carrier.Name + ' ' + b.BusNumber : String.Empty;
+}
+
+
+    public record TripInput
+    {
+        public string? Id { get; set; }
+        
+        [Required]
+        public Bus? Bus { get; set; }
+        
+        [Required]
+        public Timetable? Timetable { get; set; }
+
+        [Required] 
+        public DateTime Date { get; set; } = DateTime.Today;
+        
+        [Required]
+        public decimal PricePerKm { get; set; }
+    }
+}

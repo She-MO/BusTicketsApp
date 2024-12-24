@@ -1,0 +1,12 @@
+﻿mutation DeleteCarrier($carrierId: ID!) {
+    removeCarrier(input: {
+        id: $carrierId
+    }) {
+        boolean
+        errors {
+            ...on Error {
+                message
+            }
+        }
+    }
+}

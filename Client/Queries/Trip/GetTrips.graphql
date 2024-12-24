@@ -1,0 +1,43 @@
+﻿query GetTrips($first: Int, $after: String, $last: Int, $before: String, $where: TripFilterInput, $order: [TripSortInput!]) {
+    trips (
+        first: $first
+        last: $last
+        before: $before
+        after: $after
+        order: $order
+        where: $where
+    ) {
+        edges {
+            node {
+                id
+                timetable {
+                    timeOfDeparture
+                    timeOfArrival
+                    dayOfWeek
+                    route {
+                        id
+                        shortName
+                    }
+                }
+                bus {
+                    id
+                    busNumber
+                    numberOfSeats
+                    carrier {
+                        id
+                        name
+                    }
+                }
+                date
+                pricePerKm
+            }
+        }
+        pageInfo {
+            startCursor
+            endCursor
+            hasPreviousPage
+            hasNextPage
+        }
+        totalCount
+    }
+}

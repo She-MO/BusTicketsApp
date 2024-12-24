@@ -1,0 +1,37 @@
+﻿query TripsDataByMonthsOfYearForOneCarrier($carrierId: ID!, $year: Int!) {
+    tripsDataByMonthsOfYearForOneCarrier(
+        carrierId: $carrierId
+        year: $year
+    ) {
+        carrier {
+            id
+            name
+        }
+        aggregatedData {
+            month
+            numberOfTickets
+            numberOfTrips
+            numberOfPassengers
+            totalIncome
+            averagePrice
+        }
+    }
+}
+query TripsDataByYearsForOneCarrier($carrierId: ID!) {
+    tripsDataByYearsForOneCarrier(
+        carrierId: $carrierId
+    ) {
+        carrier {
+            id
+            name
+        }
+        aggregatedData {
+            year
+            numberOfTickets
+            numberOfTrips
+            numberOfPassengers
+            totalIncome
+            averagePrice
+        }
+    }
+}

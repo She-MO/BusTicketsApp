@@ -1,0 +1,37 @@
+﻿query TripsDataByMonthsOfYearForOneRoute($routeId: ID!, $year: Int!) {
+    tripsDataByMonthsOfYearForOneRoute(
+        routeId: $routeId
+        year: $year
+    ) {
+        route {
+            id
+            shortName
+        }
+        aggregatedData {
+            month
+            numberOfTickets
+            numberOfTrips
+            numberOfPassengers
+            totalIncome
+            averagePrice
+        }
+    }
+}
+query TripsDataByYearsForOneRoute($routeId: ID!) {
+    tripsDataByYearsForOneRoute(
+        routeId: $routeId
+    ) {
+        route {
+            id
+            shortName
+        }
+        aggregatedData {
+            year
+            numberOfTickets
+            numberOfTrips
+            numberOfPassengers
+            totalIncome
+            averagePrice
+        }
+    }
+}

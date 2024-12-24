@@ -1,0 +1,12 @@
+﻿mutation DeleteBus($busId: ID!) {
+    removeBus(input: {
+        id: $busId
+    }) {
+        boolean
+        errors {
+            ...on Error {
+                message
+            }
+        }
+    }
+}

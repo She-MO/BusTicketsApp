@@ -1,0 +1,40 @@
+﻿mutation AddTrip($busId: ID!, $timetableId: ID!, $date: Date!, $pricePerKm: Decimal!) {
+    addTrip(input: {
+        busId: $busId
+        timetableId: $timetableId
+        date: $date
+        pricePerKm: $pricePerKm
+    }) {
+        trip {
+            id
+            timetable {
+                id
+                timeOfDeparture
+                timeOfArrival
+                route {
+                    id
+                    shortName
+                    routeStops {
+                        sequence
+                        timeFromPrevStop
+                        kmFromPrevStop
+                        city {
+                            id
+                            name
+                        }
+                    }
+                }
+            }
+            bus {
+                id
+                busNumber
+            }
+            date
+        }
+        errors {
+            ...on Error {
+                message
+            }
+        }
+    }
+}

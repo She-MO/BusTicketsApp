@@ -1,0 +1,153 @@
+﻿@page "/tickets"
+@using System.ComponentModel.DataAnnotations
+@using BusTicketsApp.Client
+@using Client.Models
+@using Microsoft.AspNetCore.Authorization
+@inject BusTicketsAppClient _BusTicketsClient;
+@attribute [Authorize]
+
+<PageTitle>Your tickets</PageTitle>
+
+<MudDataGrid @ref="dataGrid" T="Ticket" ServerData="ReloadData" Filterable="false">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Tickets</MudText>
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.StartCity.Name" Title="From"/>
+        <PropertyColumn Property="x => x.EndCity.Name" Title="To"/>
+        <PropertyColumn Property="x => x.Trip.DepartureDateTime" Title="Date and time of departure"/>
+        <PropertyColumn Property="x => x.Trip.ArrivalDateTime" Title="Date and time of arrival"/>
+        <PropertyColumn Property="x => x.TotalPrice" Title="Price"/>
+        <PropertyColumn Property="x => x.NumberOfPassengers" Title="Number of passengers"/>
+        <TemplateColumn CellClass="d-flex justify-end">
+            <CellTemplate>
+                <MudStack Row>
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => DeleteTicket(context.Item.Id)">Cancel</MudButton>
+                </MudStack>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Ticket"/>
+    </PagerContent>
+</MudDataGrid>
+@code
+{
+    public MudDataGrid<Ticket> dataGrid;
+    public bool success;
+    public string? error;
+    private string? EndCursor;
+    private string? StartCursor;
+    private int curPage = 0;
+    public string? SearchString = null;
+    public int totalNumberOfItems = 0;
+    public List<String> Errors = new List<string>();
+    protected async Task<GridData<Ticket>> ReloadData(GridState<Ticket> state)
+    {
+        int? first = null;
+        int? last = null;
+        string? before = null;
+        string? after = null;
+        if (state.Page == 0 || curPage == state.Page)
+        {
+            first = state.PageSize;
+        } else if (state.Page == totalNumberOfItems / state.PageSize)
+        {
+            last = totalNumberOfItems % state.PageSize;
+        } else if (curPage < state.Page)
+        {
+            first = state.PageSize;
+            after = EndCursor;
+        }
+        else
+        {
+            before = StartCursor;
+            first = null;
+            last = state.PageSize;
+        }
+        curPage = state.Page;
+
+        var results = await _BusTicketsClient.GetTickets.ExecuteAsync(first, after, last, before);
+        if (results.Data is null)
+        {
+            error = results.Errors[0].Message;
+        }
+        var carriers = results.Data?.TicketsByUserId?.Edges?.Select(
+            e => new Ticket
+            {
+                Id = e.Node.Id,
+                StartCity = new City
+                {
+                    Id = e.Node.StartCity.Id,
+                    Name = e.Node.StartCity.Name
+                },
+                EndCity = new City
+                {
+                    Id = e.Node.EndCity.Id,
+                    Name = e.Node.EndCity.Name
+                },
+                Trip = new Trip()
+                {
+                    Id = e.Node.Trip.Id,
+                    DepartureDateTime = new DateTime(e.Node.Trip.Timetable.TimeOfDeparture.Ticks + e.Node.Trip.Timetable.Route.RouteStops.Take(e.Node.Trip.Timetable.Route.RouteStops.First(rs => rs.City.Id == e.Node.StartCity.Id).Sequence).Sum(rs => rs.TimeFromPrevStop.Ticks) + e.Node.Trip.Date.Ticks),
+                    ArrivalDateTime = new DateTime(e.Node.Trip.Timetable.TimeOfDeparture.Ticks + e.Node.Trip.Timetable.Route.RouteStops.Take(e.Node.Trip.Timetable.Route.RouteStops.First(rs => rs.City.Id == e.Node.EndCity.Id).Sequence).Sum(rs => rs.TimeFromPrevStop.Ticks) + e.Node.Trip.Date.Ticks),
+                },
+                TotalPrice = e.Node.TotalPrice,
+                NumberOfPassengers = e.Node.NumberOfPassengers,
+            }
+            ).ToArray();
+        EndCursor = results.Data?.TicketsByUserId?.PageInfo.EndCursor;
+        StartCursor = results.Data?.TicketsByUserId?.PageInfo.StartCursor;
+        totalNumberOfItems = results.Data?.TicketsByUserId?.TotalCount ?? 0;
+        return new GridData<Ticket>()
+        {
+            TotalItems = results.Data?.TicketsByUserId?.TotalCount ?? 0,
+            Items = carriers ?? Enumerable.Empty<Ticket>()
+        };
+    }
+
+    private Task OnSearch(string text)
+    {
+        SearchString = text;
+        return dataGrid.ReloadServerData();
+    }
+
+
+
+    private async Task DeleteTicket(string TicketId)
+    {
+        var result = await _BusTicketsClient.CancelTickets.ExecuteAsync(TicketId);
+        Errors.Clear();
+        if (result.Errors.Count > 0)
+        {
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+            return;
+        }
+
+        /*
+        if (result.Data?.CancelTicket.Errors is not null)
+        {
+            foreach (var error in result.Data.RemoveTicket.Errors)
+            {
+                if (error is IDeleteTicket_RemoveTicket_Errors_TicketBusUsedInTripError castedError)
+                {
+                    Errors.Add(castedError.Message);
+                }
+            }
+            return;
+        }
+        */
+
+        if (result.Data.CancelTicket.Boolean == true)
+        {
+            await dataGrid.ReloadServerData();
+        }
+    }
+
+}

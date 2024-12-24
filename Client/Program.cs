@@ -1,6 +1,9 @@
+using Client.Auth;
 using Client.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using MudBlazor.Services;
+using StrawberryShake;
 
 var builder = WebApplication.CreateBuilder(args);
 

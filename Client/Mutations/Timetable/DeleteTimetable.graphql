@@ -1,0 +1,12 @@
+﻿mutation DeleteTimetable($timetableId: ID!) {
+    removeTimetable(input: {
+        id: $timetableId
+    }) {
+        boolean
+        errors {
+            ...on Error {
+                message
+            }
+        }
+    }
+}

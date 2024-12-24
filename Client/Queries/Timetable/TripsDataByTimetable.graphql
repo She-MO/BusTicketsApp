@@ -1,0 +1,45 @@
+﻿query TripsDataByMonthsOfYearForOneTimetable($timetableId: ID!, $year: Int!) {
+    tripsDataByMonthsOfYearForOneTimetable(
+        timetableId: $timetableId
+        year: $year
+    ) {
+        timetable {
+            id
+            route {
+                shortName
+            }
+            timeOfDeparture
+            dayOfWeek
+        }
+        aggregatedData {
+            month
+            numberOfTickets
+            numberOfTrips
+            numberOfPassengers
+            totalIncome
+            averagePrice
+        }
+    }
+}
+query TripsDataByYearsForOneTimetable($timetableId: ID!) {
+    tripsDataByYearsForOneTimetable(
+        timetableId: $timetableId
+    ) {
+        timetable {
+            id
+            route {
+                shortName
+            }
+            timeOfDeparture
+            dayOfWeek
+        }
+        aggregatedData {
+            year
+            numberOfTickets
+            numberOfTrips
+            numberOfPassengers
+            totalIncome
+            averagePrice
+        }
+    }
+}

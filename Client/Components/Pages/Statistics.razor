@@ -1,0 +1,698 @@
+﻿@page "/statistics"
+@using System.ComponentModel.DataAnnotations
+@using Client.Models
+@using Microsoft.AspNetCore.Authorization
+@inject BusTicketsAppClient _BusTicketsClient;
+@attribute [Authorize(Policy = "IsAdmin")]
+<PageTitle>Statistics</PageTitle>
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+    <MudTabPanel Text="Carriers">
+        <EditForm Model="@CarrierInput" OnValidSubmit="GetCarrierData">
+            <DataAnnotationsValidator/>
+            <MudGrid>
+                <MudItem xs="12" sm="12">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudNumericField Label="Year" HelperText="Max. 20 characters"
+                                             @bind-Value="CarrierInput.Year" For="@(() => CarrierInput.Year)"/>
+                            <MudAutocomplete T="Carrier" Label="Carriers" @bind-Value="CarrierInput.Carrier" SearchFunc="@SearchCarrier" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.Name ?? String.Empty" For="() => CarrierInput.Carrier"/>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Get data</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+        @if (CarrierNumberOfTicketsSeries.Count != 0)
+        {
+            <MudChart ChartType="ChartType.Line" ChartSeries="@CarrierNumberOfTicketsSeries" XAxisLabels="@CarrierXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+            <MudDivider />
+            <MudChart ChartType="ChartType.Line" ChartSeries="@CarrierTotalIncomeSeries" XAxisLabels="@CarrierXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+            <MudDivider />
+            <MudChart ChartType="ChartType.Line" ChartSeries="@CarrierAveragePriceSeries" XAxisLabels="@CarrierXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+            <MudDivider />
+            <MudChart ChartType="ChartType.Line" ChartSeries="@CarrierNumberOfPassengersSeries" XAxisLabels="@CarrierXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+            <MudDivider />
+            <MudChart ChartType="ChartType.Line" ChartSeries="@CarrierNumberOfTripsSeries" XAxisLabels="@CarrierXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        }
+    </MudTabPanel>
+    <MudTabPanel Text="Routes">
+        <EditForm Model="@RouteInput" OnValidSubmit="GetRouteData">
+            <DataAnnotationsValidator/>
+            <MudGrid>
+                <MudItem xs="12" sm="12">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudNumericField Label="Year" HelperText="Max. 20 characters"
+                                             @bind-Value="RouteInput.Year" For="@(() => RouteInput.Year)"/>
+                            <MudAutocomplete T="Route" Label="Routes" @bind-Value="RouteInput.Route" SearchFunc="@SearchRoute" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.ShortName ?? String.Empty" For="() => RouteInput.Route"/>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Get data</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+        @if (RouteNumberOfTicketsSeries.Count != 0)
+        {
+        <MudChart ChartType="ChartType.Line" ChartSeries="@RouteNumberOfTicketsSeries" XAxisLabels="@RouteXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@RouteTotalIncomeSeries" XAxisLabels="@RouteXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@RouteAveragePriceSeries" XAxisLabels="@RouteXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@RouteNumberOfPassengersSeries" XAxisLabels="@RouteXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@RouteNumberOfTripsSeries" XAxisLabels="@RouteXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        }
+    </MudTabPanel>
+    <MudTabPanel Text="Timetables">
+        <EditForm Model="@TimetableInput" OnValidSubmit="GetTimetableData">
+            <DataAnnotationsValidator/>
+            <MudGrid>
+                <MudItem xs="12" sm="12">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudNumericField Label="Year" HelperText="Max. 20 characters"
+                                             @bind-Value="TimetableInput.Year" For="@(() => RouteInput.Year)"/>
+                        <MudAutocomplete T="Timetable" Label="Timetable" @bind-Value="TimetableInput.Timetable" SearchFunc="@SearchTimetable" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => TimetableToString(c)" For="() => TimetableInput.Timetable"/>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Get data</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+        @if (TimetableNumberOfTicketsSeries.Count != 0)
+        {
+        <MudChart ChartType="ChartType.Line" ChartSeries="@TimetableNumberOfTicketsSeries" XAxisLabels="@TimetableXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@TimetableTotalIncomeSeries" XAxisLabels="@TimetableXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@TimetableAveragePriceSeries" XAxisLabels="@TimetableXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@TimetableNumberOfPassengersSeries" XAxisLabels="@TimetableXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@TimetableNumberOfTripsSeries" XAxisLabels="@TimetableXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+
+        }
+    </MudTabPanel>
+    <MudTabPanel Text="Trips">
+        <EditForm Model="@TripsInput" OnValidSubmit="GetTripsData">
+            <DataAnnotationsValidator/>
+            <MudGrid>
+                <MudItem xs="12" sm="12">
+                    <MudCard>
+                        <MudCardContent>
+                            <MudNumericField Label="Year" HelperText="Max. 20 characters"
+                                             @bind-Value="TripsInput.Year" For="@(() => TripsInput.Year)"/>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Get data</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+        @if (TripsNumberOfTicketsSeries.Count != 0)
+        {
+        <MudChart ChartType="ChartType.Line" ChartSeries="@TripsNumberOfTicketsSeries" XAxisLabels="@TripsXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@TripsTotalIncomeSeries" XAxisLabels="@TripsXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@TripsAveragePriceSeries" XAxisLabels="@TripsXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@TripsNumberOfPassengersSeries" XAxisLabels="@TripsXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        <MudDivider />
+        <MudChart ChartType="ChartType.Line" ChartSeries="@TripsNumberOfTripsSeries" XAxisLabels="@TripsXAxisLabels" Width="100%" Height="350px" ChartOptions="@Options"/>
+        }
+    </MudTabPanel>
+</MudTabs>
+@code {
+    private int Index = -1; //default value cannot be 0 -> first selectedindex is 0.
+    public ChartOptions Options = new ChartOptions()
+    {
+        LineStrokeWidth = 3
+    };
+    
+    public List<ChartSeries> CarrierNumberOfTicketsSeries = new List<ChartSeries>();
+    public List<ChartSeries> CarrierNumberOfTripsSeries = new List<ChartSeries>();
+    public List<ChartSeries> CarrierNumberOfPassengersSeries = new List<ChartSeries>();
+    public List<ChartSeries> CarrierTotalIncomeSeries = new List<ChartSeries>();
+    public List<ChartSeries> CarrierAveragePriceSeries = new List<ChartSeries>();
+    
+    public List<ChartSeries> RouteNumberOfTicketsSeries = new List<ChartSeries>();
+    public List<ChartSeries> RouteNumberOfTripsSeries = new List<ChartSeries>();
+    public List<ChartSeries> RouteNumberOfPassengersSeries = new List<ChartSeries>();
+    public List<ChartSeries> RouteTotalIncomeSeries = new List<ChartSeries>();
+    public List<ChartSeries> RouteAveragePriceSeries = new List<ChartSeries>();
+
+    public List<ChartSeries> TimetableNumberOfTicketsSeries = new List<ChartSeries>();
+    public List<ChartSeries> TimetableNumberOfTripsSeries = new List<ChartSeries>();
+    public List<ChartSeries> TimetableNumberOfPassengersSeries = new List<ChartSeries>();
+    public List<ChartSeries> TimetableTotalIncomeSeries = new List<ChartSeries>();
+    public List<ChartSeries> TimetableAveragePriceSeries = new List<ChartSeries>();
+
+    public List<ChartSeries> TripsNumberOfTicketsSeries = new List<ChartSeries>();
+    public List<ChartSeries> TripsNumberOfTripsSeries = new List<ChartSeries>();
+    public List<ChartSeries> TripsNumberOfPassengersSeries = new List<ChartSeries>();
+    public List<ChartSeries> TripsTotalIncomeSeries = new List<ChartSeries>();
+    public List<ChartSeries> TripsAveragePriceSeries = new List<ChartSeries>();
+
+    public string[] CarrierXAxisLabels = [];
+    public string[] RouteXAxisLabels = [];
+    public string[] TimetableXAxisLabels = [];
+    public string[] TripsXAxisLabels = [];
+    public string[] MonthsOfYear = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    public CarrierDataInput CarrierInput = new ();
+    public RouteDataInput RouteInput = new ();
+    public TripsDataInput TripsInput = new ();
+    public TimetableDataInput TimetableInput = new ();
+    private async Task<IEnumerable<Carrier>> SearchCarrier(string value, CancellationToken cancellationToken)
+    {
+        if (String.IsNullOrEmpty(value) || value.Length < 3)
+        {
+            return Enumerable.Empty<Carrier>();
+        }
+        var carrierFilterInput = new CarrierFilterInput()
+        {
+            Name = new StringOperationFilterInput()
+            {
+                Contains = value
+            }
+        };
+        var sortInput = new List<CarrierSortInput>()
+        {
+            new CarrierSortInput()
+            {
+                Name = SortEnumType.Asc
+            }
+        };
+        var result = await _BusTicketsClient.GetCarriers.ExecuteAsync(10, null, null, null, carrierFilterInput, sortInput, cancellationToken);
+        return result?.Data?.Carriers?.Edges?.Select(c => new Carrier()
+        {
+            Id = c.Node.Id,
+            Name = c.Node.Name
+        }) ?? Enumerable.Empty<Carrier>();
+
+    }
+    private async Task<IEnumerable<Route>> SearchRoute(string value, CancellationToken cancellationToken)
+    {
+        if (String.IsNullOrEmpty(value) || value.Length < 3)
+        {
+            return Enumerable.Empty<Route>();
+        }
+        var routeFilterInput = new RouteFilterInput()
+        {
+            ShortName = new StringOperationFilterInput()
+            {
+                Contains = value
+            }
+        };
+        var sortInput = new List<RouteSortInput>()
+        {
+            new RouteSortInput()
+            {
+                ShortName = SortEnumType.Asc
+            }
+        };
+        var result = await _BusTicketsClient.GetRoutes.ExecuteAsync(10, null, null, null, routeFilterInput, sortInput, cancellationToken);
+        return result?.Data?.Routes?.Edges?.Select(c => new Route()
+        {
+            Id = c.Node.Id,
+            ShortName = c.Node.ShortName
+        }) ?? Enumerable.Empty<Route>();
+
+    }
+
+    private async Task<IEnumerable<Timetable>> SearchTimetable(string value, CancellationToken cancellationToken)
+    {
+        if (String.IsNullOrEmpty(value) || value.Length < 3)
+        {
+            return Enumerable.Empty<Timetable>();
+        }
+        var timetableFilterInput = new TimetableFilterInput()
+        {
+            Route = new RouteFilterInput()
+            {
+                ShortName = new StringOperationFilterInput()
+                {
+                    Contains = value
+                }
+            }
+        };
+        var sortInput = new List<TimetableSortInput>()
+        {
+            new TimetableSortInput()
+            {
+                TimeOfDeparture = SortEnumType.Asc
+            }
+        };
+        var result = await _BusTicketsClient.GetTimetables.ExecuteAsync(10, null, null, null, timetableFilterInput, sortInput, cancellationToken);
+        return result?.Data?.Timetables?.Edges?.Select(c => new Timetable()
+        {
+            Id = c.Node.Id,
+            TimeOfDeparture = TimeOnly.FromTimeSpan(c.Node.TimeOfDeparture),
+            TimeOfArrival = TimeOnly.FromTimeSpan(c.Node.TimeOfArrival),
+            Route = new Route()
+            {
+                Id = c.Node.Route.Id,
+                ShortName = c.Node.Route.ShortName
+            },
+            DayOfWeek = Enum.Parse<System.DayOfWeek>(c.Node.DayOfWeek.ToString()),
+        }) ?? Enumerable.Empty<Timetable>();
+    }
+
+
+    public async Task GetCarrierData()
+    {
+        CarrierNumberOfTicketsSeries.Clear();
+        CarrierAveragePriceSeries.Clear();
+        CarrierTotalIncomeSeries.Clear();
+        CarrierNumberOfPassengersSeries.Clear();
+        CarrierNumberOfTripsSeries.Clear();
+
+        if (CarrierInput.Year is null or 0)
+        {
+            var result = await _BusTicketsClient.TripsDataByYearsForOneCarrier.ExecuteAsync(CarrierInput.Carrier.Id);
+            if (result.Errors.Count == 0 && result.Data is not null)
+            {
+                CarrierXAxisLabels = result?.Data?.TripsDataByYearsForOneCarrier?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => ad.Year.ToString())?.ToArray() ?? [];
+                CarrierNumberOfTicketsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of tickets",
+                    Data = result?.Data?.TripsDataByYearsForOneCarrier?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfTickets).ToArray() ?? []
+                });
+                CarrierTotalIncomeSeries.Add(new ChartSeries()
+                {
+                    Name = "Total income",
+                    Data = result?.Data?.TripsDataByYearsForOneCarrier?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.TotalIncome).ToArray() ?? []
+                });
+                CarrierAveragePriceSeries.Add(new ChartSeries()
+                {
+                    Name = "Average price of sold ticket",
+                    Data = result?.Data?.TripsDataByYearsForOneCarrier?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.AveragePrice).ToArray() ?? []
+                });
+                CarrierNumberOfPassengersSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of passengers",
+                    Data = result?.Data?.TripsDataByYearsForOneCarrier?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfPassengers).ToArray() ?? []
+                });
+                CarrierNumberOfTripsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of trips",
+                    Data = result?.Data?.TripsDataByYearsForOneCarrier?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfTrips).ToArray() ?? []
+                });
+            }
+        }
+        else
+        {
+            var result = await _BusTicketsClient.TripsDataByMonthsOfYearForOneCarrier.ExecuteAsync(CarrierInput.Carrier.Id, (int)CarrierInput.Year);
+            if (result.Errors.Count == 0 && result.Data is not null)
+            {
+                CarrierXAxisLabels = MonthsOfYear;
+                var carrierSeriesData = new double[12];
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    carrierSeriesData[i] = result.Data.TripsDataByMonthsOfYearForOneCarrier.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfTickets ?? 0;
+                }
+                CarrierNumberOfTicketsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of tickets",
+                    Data = carrierSeriesData.Select(c => c).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    carrierSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneCarrier.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.TotalIncome ?? 0;
+                }
+                CarrierTotalIncomeSeries.Add(new ChartSeries()
+                {
+                    Name = "Total income",
+                    Data = carrierSeriesData.Select(c => c).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    carrierSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneCarrier.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.AveragePrice ?? 0;
+                }
+                CarrierAveragePriceSeries.Add(new ChartSeries()
+                {
+                    Name = "Average price of sold ticket",
+                    Data = carrierSeriesData.Select(c => c).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    carrierSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneCarrier.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfPassengers ?? 0;
+                }
+                CarrierNumberOfPassengersSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of passengers",
+                    Data = carrierSeriesData.Select(c => c).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    carrierSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneCarrier.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfTrips ?? 0;
+                }
+                CarrierNumberOfTripsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of trips",
+                    Data = carrierSeriesData.Select(c => c).ToArray()
+                });
+            }
+
+            
+        }
+    }
+        public async Task GetRouteData()
+    {
+        RouteNumberOfTicketsSeries.Clear();
+        RouteAveragePriceSeries.Clear();
+        RouteTotalIncomeSeries.Clear();
+        RouteNumberOfPassengersSeries.Clear();
+        RouteNumberOfTripsSeries.Clear();
+
+        if (RouteInput.Year is null or 0)
+        {
+            var result = await _BusTicketsClient.TripsDataByYearsForOneRoute.ExecuteAsync(RouteInput.Route.Id);
+            if (result.Errors.Count == 0 && result.Data is not null)
+            {
+                RouteXAxisLabels = result?.Data?.TripsDataByYearsForOneRoute?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => ad.Year.ToString())?.ToArray() ?? [];
+                RouteNumberOfTicketsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of tickets",
+                    Data = result?.Data?.TripsDataByYearsForOneRoute?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfTickets).ToArray() ?? []
+                });
+                RouteTotalIncomeSeries.Add(new ChartSeries()
+                {
+                    Name = "Total income",
+                    Data = result?.Data?.TripsDataByYearsForOneRoute?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.TotalIncome).ToArray() ?? []
+                });
+                RouteAveragePriceSeries.Add(new ChartSeries()
+                {
+                    Name = "Average price of sold ticket",
+                    Data = result?.Data?.TripsDataByYearsForOneRoute?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.AveragePrice).ToArray() ?? []
+                });
+                RouteNumberOfPassengersSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of passengers",
+                    Data = result?.Data?.TripsDataByYearsForOneRoute?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfPassengers).ToArray() ?? []
+                });
+                RouteNumberOfTripsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of trips",
+                    Data = result?.Data?.TripsDataByYearsForOneRoute?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfTrips).ToArray() ?? []
+                });
+
+            }
+        }
+        else
+        {
+            var result = await _BusTicketsClient.TripsDataByMonthsOfYearForOneRoute.ExecuteAsync(RouteInput.Route.Id, (int)RouteInput.Year);
+            if (result.Errors.Count == 0 && result.Data is not null)
+            {
+                RouteXAxisLabels = MonthsOfYear;
+                var routeSeriesData = new double[12];
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    routeSeriesData[i] = result.Data.TripsDataByMonthsOfYearForOneRoute.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfTickets ?? 0;
+                }
+                RouteNumberOfTicketsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of tickets",
+                    Data = routeSeriesData.Select(r => r).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    routeSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneRoute.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.TotalIncome ?? 0;
+                }
+                RouteTotalIncomeSeries.Add(new ChartSeries()
+                {
+                    Name = "Total income",
+                    Data = routeSeriesData.Select(r => r).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    routeSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneRoute.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.AveragePrice ?? 0;
+                }
+                RouteAveragePriceSeries.Add(new ChartSeries()
+                {
+                    Name = "Average price of sold ticket",
+                    Data = routeSeriesData.Select(r => r).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    routeSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneRoute.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfPassengers ?? 0;
+                }
+                RouteNumberOfPassengersSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of passengers",
+                    Data = routeSeriesData.Select(r => r).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    routeSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneRoute.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfTrips ?? 0;
+                }
+                RouteNumberOfTripsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of trips",
+                    Data = routeSeriesData.Select(r => r).ToArray()
+                });
+
+            }
+
+            
+        }
+    }
+    public async Task GetTimetableData()
+    {
+        TimetableNumberOfTicketsSeries.Clear();
+        TimetableAveragePriceSeries.Clear();
+        TimetableTotalIncomeSeries.Clear();
+        TimetableNumberOfPassengersSeries.Clear();
+        TimetableNumberOfTripsSeries.Clear();
+
+        if (TimetableInput.Year is null or 0)
+        {
+            var result = await _BusTicketsClient.TripsDataByYearsForOneTimetable.ExecuteAsync(TimetableInput.Timetable.Id);
+            if (result.Errors.Count == 0 && result.Data is not null)
+            {
+                TimetableXAxisLabels = result?.Data?.TripsDataByYearsForOneTimetable?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => ad.Year.ToString())?.ToArray() ?? [];
+                TimetableNumberOfTicketsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of tickets",
+                    Data = result?.Data?.TripsDataByYearsForOneTimetable?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfTickets).ToArray() ?? []
+                });
+                TimetableTotalIncomeSeries.Add(new ChartSeries()
+                {
+                    Name = "Total income",
+                    Data = result?.Data?.TripsDataByYearsForOneTimetable?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.TotalIncome).ToArray() ?? []
+                });
+                TimetableAveragePriceSeries.Add(new ChartSeries()
+                {
+                    Name = "Average price of sold ticket",
+                    Data = result?.Data?.TripsDataByYearsForOneTimetable?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.AveragePrice).ToArray() ?? []
+                });
+                TimetableNumberOfPassengersSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of passengers",
+                    Data = result?.Data?.TripsDataByYearsForOneTimetable?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfPassengers).ToArray() ?? []
+                });
+                TimetableNumberOfTripsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of trips",
+                    Data = result?.Data?.TripsDataByYearsForOneTimetable?.AggregatedData?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfTrips).ToArray() ?? []
+                });
+
+            }
+        }
+        else
+        {
+            var result = await _BusTicketsClient.TripsDataByMonthsOfYearForOneTimetable.ExecuteAsync(TimetableInput.Timetable.Id, (int)TimetableInput.Year);
+            if (result.Errors.Count == 0 && result.Data is not null)
+            {
+                TimetableXAxisLabels = MonthsOfYear;
+                var timetableSeriesData = new double[12];
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    timetableSeriesData[i] = result.Data.TripsDataByMonthsOfYearForOneTimetable.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfTickets ?? 0;
+                }
+                TimetableNumberOfTicketsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of tickets",
+                    Data = timetableSeriesData.Select(t => t).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    timetableSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneTimetable.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.TotalIncome ?? 0;
+                }
+                TimetableTotalIncomeSeries.Add(new ChartSeries()
+                {
+                    Name = "Total income",
+                    Data = timetableSeriesData.Select(t => t).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    timetableSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneTimetable.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.AveragePrice ?? 0;
+                }
+                TimetableAveragePriceSeries.Add(new ChartSeries()
+                {
+                    Name = "Average price of sold ticket",
+                    Data = timetableSeriesData.Select(t => t).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    timetableSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneTimetable.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfPassengers ?? 0;
+                }
+                TimetableNumberOfPassengersSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of passengers",
+                    Data = timetableSeriesData.Select(t => t).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    timetableSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYearForOneTimetable.AggregatedData.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfTrips ?? 0;
+                }
+                TimetableNumberOfTripsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of trips",
+                    Data = timetableSeriesData.Select(t => t).ToArray()
+                });
+
+            }
+
+            
+        }
+    }
+
+        public async Task GetTripsData()
+    {
+        TripsNumberOfTicketsSeries.Clear();
+        TripsAveragePriceSeries.Clear();
+        TripsTotalIncomeSeries.Clear();
+        TripsNumberOfPassengersSeries.Clear();
+        TripsNumberOfTripsSeries.Clear();
+
+        if (TripsInput.Year is null or 0)
+        {
+            var result = await _BusTicketsClient.TripsDataByYears.ExecuteAsync();
+            if (result.Errors.Count == 0 && result.Data is not null)
+            {
+                TripsXAxisLabels = result?.Data?.TripsDataByYears?.OrderBy(ad => ad.Year).Select(ad => ad.Year.ToString())?.ToArray() ?? [];
+                TripsNumberOfTicketsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of tickets",
+                    Data = result?.Data?.TripsDataByYears.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfTickets).ToArray() ?? []
+                });
+                TripsTotalIncomeSeries.Add(new ChartSeries()
+                {
+                    Name = "Total income",
+                    Data = result?.Data?.TripsDataByYears.OrderBy(ad => ad.Year).Select(ad => (double)ad.TotalIncome).ToArray() ?? []
+                });
+                TripsAveragePriceSeries.Add(new ChartSeries()
+                {
+                    Name = "Average price of sold ticket",
+                    Data = result?.Data?.TripsDataByYears.OrderBy(ad => ad.Year).Select(ad => (double)ad.AveragePrice).ToArray() ?? []
+                });
+                TripsNumberOfPassengersSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of passengers",
+                    Data = result?.Data?.TripsDataByYears?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfPassengers).ToArray() ?? []
+                });
+                TripsNumberOfTripsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of trips",
+                    Data = result?.Data?.TripsDataByYears?.OrderBy(ad => ad.Year).Select(ad => (double)ad.NumberOfTrips).ToArray() ?? []
+                });
+
+            }
+        }
+        else
+        {
+            var result = await _BusTicketsClient.TripsDataByMonthsOfYear.ExecuteAsync((int)TripsInput.Year);
+            if (result.Errors.Count == 0 && result.Data is not null)
+            {
+                TripsXAxisLabels = MonthsOfYear;
+                var carrierSeriesData = new double[12];
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    carrierSeriesData[i] = result.Data.TripsDataByMonthsOfYear.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfTickets ?? 0;
+                }
+                TripsNumberOfTicketsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of tickets",
+                    Data = carrierSeriesData.Select(t => t).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    carrierSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYear.FirstOrDefault(ad => ad.Month == i + 1)?.TotalIncome ?? 0;
+                }
+                TripsTotalIncomeSeries.Add(new ChartSeries()
+                {
+                    Name = "Total income",
+                    Data = carrierSeriesData.Select(t => t).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    carrierSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYear.FirstOrDefault(ad => ad.Month == i + 1)?.AveragePrice ?? 0;
+                }
+                TripsAveragePriceSeries.Add(new ChartSeries()
+                {
+                    Name = "Average price of sold ticket",
+                    Data = carrierSeriesData.Select(t => t).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    carrierSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYear.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfPassengers ?? 0;
+                }
+                TripsNumberOfPassengersSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of passengers",
+                    Data = carrierSeriesData.Select(t => t).ToArray()
+                });
+                for (int i = 0; i < MonthsOfYear.Length; i++)
+                {
+                    carrierSeriesData[i] = (double?)result.Data.TripsDataByMonthsOfYear.FirstOrDefault(ad => ad.Month == i + 1)?.NumberOfTrips ?? 0;
+                }
+                TripsNumberOfTripsSeries.Add(new ChartSeries()
+                {
+                    Name = "Number of trips",
+                    Data = carrierSeriesData.Select(t => t).ToArray()
+                });
+
+            }
+
+            
+        }
+    }
+
+    public string TimetableToString(Timetable? t)
+    {
+        return (t is not null) ? t.Route.ShortName + ' ' + t.TimeOfDeparture + ' ' + t.DayOfWeek.ToString() : String.Empty;
+    }
+
+
+    public record CarrierDataInput
+    {
+        public int? Year { get; set; }
+        [Required]
+        public Carrier? Carrier { get; set; }
+    }
+    public record RouteDataInput
+    {
+        public int? Year { get; set; }
+        public Route? Route { get; set; }
+    }
+    public record TimetableDataInput
+    {
+        public int? Year { get; set; }
+        public Timetable? Timetable { get; set; }
+    }
+    public record TripsDataInput
+    {
+        public int? Year { get; set; }
+    }
+
+
+}

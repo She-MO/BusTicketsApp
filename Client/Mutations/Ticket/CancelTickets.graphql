@@ -1,0 +1,7 @@
+mutation CancelTickets($ticketId: ID!) {
+    cancelTicket(input: {
+        id: $ticketId
+    }) {
+        boolean
+    }
+}

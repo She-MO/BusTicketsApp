@@ -15,5 +15,4 @@ public class User
 
     public Roles Role { get; set; } = Roles.User;
 
-    public ICollection<Passenger> Passengers { get; init; } = new List<Passenger>();
 }
