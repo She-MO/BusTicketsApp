@@ -1,4 +1,5 @@
 ﻿using BusTicketsApp.Server.Data;
+using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace BusTicketsApp.Server.Carriers;
@@ -38,5 +39,23 @@ public static class CarrierMutations
         carrier.Name = input.Name;
         await dbContext.SaveChangesAsync(cancellationToken);
         return carrier;
+    }
+    [Authorize(Policy = "IsManagerOrAdmin")]
+    [Error<OneOfCarrierBusesUsedInTripException>]
+    public static async Task<bool> RemoveCarrierAsync(
+        RemoveCarrierInput input,
+        ApplicationDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            int result = await dbContext.Carriers.Where(carrier => carrier.Id == input.Id).ExecuteDeleteAsync(cancellationToken);
+            return Convert.ToBoolean(result);
+        }
+        catch (Exception e)
+        {
+            //Console.WriteLine(e);
+            throw new OneOfCarrierBusesUsedInTripException();
+        }
     }
 }

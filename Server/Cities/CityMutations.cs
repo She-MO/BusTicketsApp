@@ -1,4 +1,5 @@
 ﻿using BusTicketsApp.Server.Data;
+using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace BusTicketsApp.Server.Cities;
@@ -38,5 +39,23 @@ public static class CityMutations
         city.Name = input.Name;
         await dbContext.SaveChangesAsync(cancellationToken);
         return city;
+    }
+    [Authorize(Policy = "IsManagerOrAdmin")]
+    [Error<CityUsedInRouteException>]
+    public static async Task<bool> RemoveCityAsync(
+        RemoveCityInput input,
+        ApplicationDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            int result = await dbContext.Cities.Where(city => city.Id == input.Id).ExecuteDeleteAsync(cancellationToken);
+            return Convert.ToBoolean(result);
+        }
+        catch (Exception e)
+        {
+            //Console.WriteLine(e);
+            throw new CityUsedInRouteException();
+        }
     }
 }

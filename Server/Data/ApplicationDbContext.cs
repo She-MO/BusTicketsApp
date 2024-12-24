@@ -36,6 +36,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .Entity<Carrier>()
             .HasIndex(c => c.Name)
             .IsUnique();
+        modelBuilder
+            .Entity<Carrier>()
+            .HasMany(c => c.Buses)
+            .WithOne(b => b.Carrier)
+            .OnDelete(DeleteBehavior.Cascade);
         
         
         //bus entity
@@ -43,6 +48,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .Entity<Bus>()
             .HasIndex(b => b.BusNumber)
             .IsUnique();
+        modelBuilder
+            .Entity<Bus>()
+            .HasMany(c => c.Trips)
+            .WithOne(b => b.Bus)
+            .OnDelete(DeleteBehavior.Restrict);
         
         
         //city entity
@@ -74,6 +84,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasConversion(
                 day => day.ToString(),
                 stringDay => (DayOfWeek)Enum.Parse<DayOfWeek>(stringDay));
+        //Route entity
+        modelBuilder
+            .Entity<Route>()
+            .HasMany(c => c.RouteStops)
+            .WithOne(b => b.Route)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
 }
