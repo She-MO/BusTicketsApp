@@ -14,6 +14,7 @@ public static class TicketMutations
     [Error<OneOfTheCitiesIsNotPartOfTheRouteException>]
     [Error<IncorrectCitySequence>]
     [Error<NotEnoughSeatsException>]    
+    [Error<CannotBuyTicketsIfLessThanOneHourLeftBeforeTripException>]
     public static async Task<Ticket> BuyTicket(
         BuyTicketInput input,
         ApplicationDbContext dbContext,
@@ -23,6 +24,10 @@ public static class TicketMutations
         var trip = await dbContext.Trips.Where(trip => trip.Id == input.TripId).Include(trip => trip.TripSeats)
             .Include(trip => trip.Timetable).ThenInclude(timetable => timetable.Route)
             .ThenInclude(route => route.RouteStops).FirstAsync(cancellationToken);
+        if ((new DateTime((trip.Date.ToDateTime(new TimeOnly(0))).Ticks + trip.Timetable.TimeOfDeparture.Ticks) - new DateTime((trip.Date.ToDateTime(new TimeOnly(0))).Ticks + trip.Timetable.TimeOfArrival.Ticks)).TotalHours < 1)
+        {
+            throw new CannotBuyTicketsIfLessThanOneHourLeftBeforeTripException();
+        }
         RouteStop? firstCityInRoute = trip.Timetable.Route.RouteStops.FirstOrDefault(rs => rs.CityId == input.FromCityId);
         RouteStop? secondCityInRoute = trip.Timetable.Route.RouteStops.FirstOrDefault(rs => rs.CityId == input.ToCityId);
         if (firstCityInRoute is null || secondCityInRoute is null)
@@ -79,7 +84,7 @@ public static class TicketMutations
             throw new UserIsNotAuthorizedToCancelTicketException();
         }
 
-        if (ticket.Trip.Date < DateOnly.FromDateTime(DateTime.Today))
+        if (ticket.Trip.Date <= DateOnly.FromDateTime(DateTime.Today))
         {
             throw new CannotCancelTicketForTripThatAlreadyHappened();
         }

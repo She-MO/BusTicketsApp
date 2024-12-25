@@ -6,33 +6,37 @@
 
 <PageTitle>Cities</PageTitle>
 
-@foreach (var message in Errors ?? Enumerable.Empty<string>())
-{
-    <MudAlert Severity="Severity.Error">@message</MudAlert>
-}
-<EditForm Model="@Input" OnValidSubmit="AddOrRenameCity">
-    <DataAnnotationsValidator/>
-    <MudGrid>
-        <MudItem xs="12" sm="12">
-            <MudCard>
-                <MudCardContent>
-                    <MudTextField Label="First name" HelperText="Max. 20 characters"
-                                  @bind-Value="Input.Name" For="@(() => Input.Name)"/>
-                </MudCardContent>
-                <MudCardActions>
-                    @if (CurrentCity is not null)
-                    {
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
-                    }
-                    else
-                    {
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
-                    }
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
-</EditForm>
+<AuthorizeView Policy="IsAdmin">
+<Authorized Context="authContext">
+    @foreach (var message in Errors ?? Enumerable.Empty<string>())
+    {
+        <MudAlert Severity="Severity.Error">@message</MudAlert>
+    }
+    <EditForm Model="@Input" OnValidSubmit="AddOrRenameCity">
+        <DataAnnotationsValidator/>
+        <MudGrid>
+            <MudItem xs="12" sm="12">
+                <MudCard>
+                    <MudCardContent>
+                        <MudTextField Label="City name" HelperText="Max. 20 characters"
+                                      @bind-Value="Input.Name" For="@(() => Input.Name)"/>
+                    </MudCardContent>
+                    <MudCardActions>
+                        @if (CurrentCity is not null)
+                        {
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
+                        }
+                        else
+                        {
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+                        }
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</Authorized>
+</AuthorizeView>
 <MudDataGrid @ref="dataGrid" T="City" ServerData="ReloadData" Filterable="false">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Cities</MudText>
@@ -42,20 +46,24 @@
     </ToolBarContent>
     <Columns>
         <PropertyColumn Property="x => x.Name"/>
-        <TemplateColumn CellClass="d-flex justify-end">
-            <CellTemplate>
-                <MudStack Row>
-                    @if (context.Item.Id == CurrentCity)
-                    {
-                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCity(null, null)">Deselect</MudButton>
-                    }
-                    else
-                    {
-                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCity(context.Item.Id, context.Item.Name)">Rename</MudButton>
-                    }
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
+        <AuthorizeView Policy="IsAdmin">
+        <Authorized Context="authContext">
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudStack Row>
+                        @if (context.Item.Id == CurrentCity)
+                        {
+                            <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCity(null, null)">Deselect</MudButton>
+                        }
+                        else
+                        {
+                            <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCity(context.Item.Id, context.Item.Name)">Select</MudButton>
+                        }
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Authorized>
+        </AuthorizeView>
     </Columns>
     <PagerContent>
         <MudDataGridPager T="City"/>
@@ -192,6 +200,31 @@
         if (CurrentCity is not null)
         {
             var result = await _BusTicketsClient.RenameCity.ExecuteAsync(CurrentCity, Input.Name);
+            Errors.Clear();
+            if (result.Errors.Count > 0)
+            {
+                foreach (var error in result.Errors)
+                {
+                    Errors.Add(error.Message);
+                }
+                return;
+            }
+
+            if (result.Data?.RenameCity.Errors is not null)
+            {
+                foreach (var error in result.Data.RenameCity.Errors)
+                {
+                    if (error is IRenameCity_RenameCity_Errors_CityNotFoundError castedError)
+                    {
+                        Errors.Add(castedError.Message);
+                    }
+                    if (error is IRenameCity_RenameCity_Errors_CityNameAlreadyInUseError castedError1)
+                    {
+                        Errors.Add(castedError1.Message);
+                    }
+                }
+                return;
+            }
             Input.Name = null;
             CurrentCity = null;
             await dataGrid.ReloadServerData();
@@ -199,6 +232,28 @@
         else
         {
             var result = await _BusTicketsClient.AddCity.ExecuteAsync(Input.Name);
+            Errors.Clear();
+            if (result.Errors.Count > 0)
+            {
+                foreach (var error in result.Errors)
+                {
+                    Errors.Add(error.Message);
+                }
+                return;
+            }
+
+            if (result.Data?.AddCity.Errors is not null)
+            {
+                foreach (var error in result.Data.AddCity.Errors)
+                {
+                    if (error is IAddCity_AddCity_Errors_CityNameAlreadyInUseError castedError)
+                    {
+                        Errors.Add(castedError.Message);
+                    }
+                }
+                return;
+            }
+
             Input.Name = null;
             await dataGrid.ReloadServerData();
         }

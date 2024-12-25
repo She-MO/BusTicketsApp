@@ -19,6 +19,7 @@ public static partial class RouteStopType
             .Field(s => s.CityId)
             .ID<City>();
     }
+    //[UseProjection]
     public static async Task<City?> GetCityAsync(
         [Parent(nameof(RouteStop.CityId))] RouteStop stop,
         ICityByIdDataLoader cityById,
@@ -29,6 +30,7 @@ public static partial class RouteStopType
             .Select(selection)
             .LoadAsync(stop.CityId, cancellationToken);
     }
+    //[UseProjection]
     public static async Task<Route?> GetRouteAsync(
         [Parent(nameof(RouteStop.RouteId))] RouteStop stop,
         IRouteByIdDataLoader routeById,

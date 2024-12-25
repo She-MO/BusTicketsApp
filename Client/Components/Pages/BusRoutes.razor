@@ -115,21 +115,25 @@
             <Columns>
                 <PropertyColumn Property="x => x.ShortName" Title="Route name"/>
                 <PropertyColumn Property="x => x.RouteStops.Count" Title="Number of stops" Sortable="false"/>
-        <TemplateColumn CellClass="d-flex justify-end">
-            <CellTemplate>
-                <MudStack Row>
-                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => DeleteRoute(context.Item.Id)">Delete</MudButton>
-                    @if (context.Item.Id == Input.Id)
-                    {
-                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseRoute(null)">Cancel</MudButton>
-                    }
-                    else
-                    {
-                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseRoute(context.Item)">Select</MudButton>
-                    }
-                </MudStack>
-            </CellTemplate>
-        </TemplateColumn>
+                <AuthorizeView Policy="IsAdmin">
+                <Authorized Context="authContext">
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudStack Row>
+                                <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => DeleteRoute(context.Item.Id)">Delete</MudButton>
+                                @if (context.Item.Id == Input.Id)
+                                {
+                                    <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseRoute(null)">Cancel</MudButton>
+                                }
+                                else
+                                {
+                                    <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseRoute(context.Item)">Select</MudButton>
+                                }
+                            </MudStack>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Authorized>
+                </AuthorizeView>
             </Columns>
             <PagerContent>
                 <MudDataGridPager T="Route"/>

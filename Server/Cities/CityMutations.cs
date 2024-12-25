@@ -25,6 +25,7 @@ public static class CityMutations
     }
     
     [Error<CityNotFoundException>]
+    [Error<CityNameAlreadyInUseException>]
     public static async Task<City> RenameCityAsync(
         RenameCityInput input,
         ApplicationDbContext dbContext,
@@ -37,7 +38,13 @@ public static class CityMutations
         }
 
         city.Name = input.Name;
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        } catch
+        {
+            throw new CityNameAlreadyInUseException();
+        } 
         return city;
     }
     [Authorize(Policy = "IsManagerOrAdmin")]

@@ -14,7 +14,7 @@ mutation AddBus($busNumber: String!, $numberOfSeats: Int!, $carrierId: ID!) {
             }
         }
         errors {
-            ... on BusNumberAlreadyInUseError {
+            ... on Error {
                 message
             }
         }

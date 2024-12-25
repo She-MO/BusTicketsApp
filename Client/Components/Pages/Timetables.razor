@@ -293,7 +293,7 @@
             {
                 Errors.Add(error.Message);
             }
-            foreach (var error in result.Data.AddTimetable.Errors ?? Enumerable.Empty<IAddTimetable_AddTimetable_Errors>())
+            foreach (var error in result.Data?.AddTimetable.Errors ?? Enumerable.Empty<IAddTimetable_AddTimetable_Errors>())
             {
                 if (error is IAddTimetable_AddTimetable_Errors_TimetableWithThisSettingsAlreadyExists castedError)
                 {

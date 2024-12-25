@@ -8,6 +8,7 @@ namespace BusTicketsApp.Server.Tickets;
 public static class TicketQueries
 {
     [NodeResolver]
+    //[UseProjection]
     public static async Task<Ticket?> GetTicketById(
         int id,
         ITicketByIdDataLoader ticketById,

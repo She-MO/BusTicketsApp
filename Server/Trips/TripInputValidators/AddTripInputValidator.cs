@@ -23,10 +23,10 @@ public class AddTripInputValidator : AbstractValidator<AddTripInput>
                 var timetable = await dbContext.Timetables.FirstOrDefaultAsync(t => t.Id == tuple.TimetableId);
                 foreach (var trip in trips)
                 {
-                    if (trip.Timetable.TimeOfDeparture > timetable.TimeOfDeparture &&
-                        trip.Timetable.TimeOfDeparture < timetable.TimeOfArrival ||
-                        trip.Timetable.TimeOfArrival > timetable.TimeOfDeparture &&
-                        trip.Timetable.TimeOfArrival < timetable.TimeOfArrival)
+                    if (trip.Timetable.TimeOfDeparture >= timetable.TimeOfDeparture &&
+                        trip.Timetable.TimeOfDeparture <= timetable.TimeOfArrival ||
+                        trip.Timetable.TimeOfArrival >= timetable.TimeOfDeparture &&
+                        trip.Timetable.TimeOfArrival <= timetable.TimeOfArrival)
                     {
                         return false;
                     }
@@ -35,6 +35,9 @@ public class AddTripInputValidator : AbstractValidator<AddTripInput>
             }).WithMessage("Specified bus is used for another trip at this time");
         RuleFor(input => input.PricePerKm)
             .GreaterThan(0).WithMessage("Price must be greater than 0");
+        RuleFor(input => input.Date)
+            .GreaterThan(DateOnly.FromDateTime(DateTime.Now)).WithMessage("Date must be greater than current date")
+            .LessThan(DateOnly.FromDateTime(DateTime.Today.AddMonths(2))).WithMessage("Difference between current date and date of the trip has to be less than 2 months");
     }
     
 }

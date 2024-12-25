@@ -3,5 +3,10 @@ mutation CancelTickets($ticketId: ID!) {
         id: $ticketId
     }) {
         boolean
+        errors {
+            ...on Error {
+                message
+            }
+        }
     }
 }

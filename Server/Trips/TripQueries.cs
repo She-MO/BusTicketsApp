@@ -1,4 +1,5 @@
-﻿using BusTicketsApp.Server.Data;
+﻿using AppAny.HotChocolate.FluentValidation;
+using BusTicketsApp.Server.Data;
 using BusTicketsApp.Server.Trips.TripInputs;
 using GreenDonut.Selectors;
 using HotChocolate.Execution.Processing;
@@ -9,6 +10,7 @@ namespace BusTicketsApp.Server.Trips;
 public static class TripQueries
 {
     [UsePaging]
+    //[UseProjection]
     [UseFiltering]
     [UseSorting]
     public static IQueryable<Trip> GetTrips(ApplicationDbContext dbContext)
@@ -16,7 +18,7 @@ public static class TripQueries
         return dbContext.Trips.AsNoTracking();
     }
     public static async Task<IEnumerable<Trip>> FindTrips(
-        FindTripInput input,
+        [UseFluentValidation] FindTripInput input,
         ITripByIdDataLoader tripById,
         ISelection selection,
         ApplicationDbContext dbContext,

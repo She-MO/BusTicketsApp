@@ -8,6 +8,7 @@ namespace BusTicketsApp.Server.Timetables;
 public static class TimetableQueries
 {
     [UsePaging]
+    //[UseProjection]
     [UseFiltering]
     [UseSorting]
     public static IQueryable<Timetable> GetTimetables(ApplicationDbContext dbContext)

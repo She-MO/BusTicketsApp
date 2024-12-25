@@ -7,23 +7,16 @@
 
 <PageTitle>Home</PageTitle>
 
+@foreach (var message in Errors ?? Enumerable.Empty<string>())
+{
+    <MudAlert Severity="Severity.Error">@message</MudAlert>
+}
+
 <EditForm Model="@Input" OnValidSubmit="FindTrip">
     <DataAnnotationsValidator/>
     <MudGrid>
         <MudItem xs="3" sm="3">
             <MudAutocomplete T="City" Label="From city" @bind-Value="Input.StartCity" SearchFunc="@Search" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.Name ?? String.Empty" For="() => Input.StartCity"/>
-            @*
-                <MudCardActions>
-                    @if (CurrentBus is not null)
-                    {
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Rename</MudButton>
-                    }
-                    else
-                    {
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
-                    }
-                </MudCardActions>
-            *@
         </MudItem>
         <MudItem xs="3" sm="3">
             <MudAutocomplete T="City" Label="To city" @bind-Value="Input.EndCity" SearchFunc="@Search" Variant="Variant.Outlined" ShowProgressIndicator="true" ToStringFunc="c => c?.Name ?? String.Empty" For="() => Input.EndCity"/>
@@ -52,7 +45,7 @@
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudStack Row>
-                            <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" >Buy tickets</MudButton>
+                            <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="() => OpenConfirmPurchaseDialogAsync(context.Item)">Buy tickets</MudButton>
                         </MudStack>
                     </CellTemplate>
                 </TemplateColumn>
@@ -64,6 +57,7 @@
 @code {
     public FindTripInput Input = new FindTripInput();
     public MudDataGrid<Trip> dataGrid;
+    public List<string> Errors = new();
     private async Task<IEnumerable<City>> Search(string value, CancellationToken cancellationToken)
     {
         if (String.IsNullOrEmpty(value) || value.Length < 3)
@@ -103,8 +97,44 @@
             };
         }
 
-        var results = await _BusTicketsClient.FindTrips.ExecuteAsync(Input.Date, Input.StartCity.Id, Input.EndCity.Id, Input.NumberOfPassengers);
-        var trips = results.Data?.FindTrips?.Select(
+        var result = await _BusTicketsClient.FindTrips.ExecuteAsync(Input.Date, Input.StartCity.Id, Input.EndCity.Id, Input.NumberOfPassengers);
+        Errors.Clear();
+        if (result.Errors.Count > 0)
+        {
+            foreach (var error in result.Errors)
+            {
+                Errors.Add(error.Message);
+            }
+            return new GridData<Trip>()
+            {
+                TotalItems = 0,
+                Items = Enumerable.Empty<Trip>()
+            };
+        }
+
+        /*
+        if (result.Data?.FindTrips.Errors is not null)
+        {
+            foreach (var error in result.Data.RenameCarrier.Errors)
+            {
+                if (error is IRenameCarrier_RenameCarrier_Errors_CarrierNotFoundError castedError)
+                {
+                    Errors.Add(castedError.Message);
+                }
+                if (error is IRenameCarrier_RenameCarrier_Errors_CarrierNameAlreadyInUseError castedError1)
+                {
+                    Errors.Add(castedError1.Message);
+                }
+            }
+            return new GridData<Trip>()
+            {
+                TotalItems = 0,
+                Items = Enumerable.Empty<Trip>()
+            };
+        }
+        */
+
+        var trips = result.Data?.FindTrips?.Select(
             e => new Trip
             {
                 Id = e.Id,
@@ -118,15 +148,20 @@
             ).ToArray();
         return new GridData<Trip>()
         {
-            TotalItems = results.Data?.FindTrips?.Count ?? 0,
+            TotalItems = result.Data?.FindTrips?.Count ?? 0,
             Items = trips ?? Enumerable.Empty<Trip>()
         };
     }
-    private async Task OpenSignOutDialogAsync()
+    private async Task OpenConfirmPurchaseDialogAsync(Trip trip)
     {
+        var parameters = new DialogParameters<BuyTicketDialog>
+        {
+            { x => x.Trip,  trip},
+            { x => x.Input, Input}
+        };
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true};
 
-        var res = await (await _DialogService.ShowAsync<BuyTicketDialog>("Confirm ticket purchase", options)).Result;
+        var res = await (await _DialogService.ShowAsync<BuyTicketDialog>("Confirm ticket purchase", parameters, options)).Result;
         if (!res.Canceled)
         {
             await dataGrid.ReloadServerData();

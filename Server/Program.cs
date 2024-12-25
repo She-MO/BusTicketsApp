@@ -1,8 +1,10 @@
 using System.Text;
+using AppAny.HotChocolate.FluentValidation;
 using BusTicketsApp.Server.Auth;
 using BusTicketsApp.Server.Data;
 using BusTicketsApp.Server.Filtering;
-using DataAnnotatedModelValidations;
+using BusTicketsApp.Server.Trips.TripInputValidators;
+using FluentValidation;
 //using BusTicketsApp.Server.Users.UserInputValidators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -57,7 +59,12 @@ builder.Services.AddSingleton<TokenProvider>()
     .AddSorting()
     .AddServerTypes()
     .AddAuthorization()
+    //.AddProjections()
     //.AddDataAnnotationsValidator()
+    .AddFluentValidation(options =>
+    {
+        options.UseDefaultErrorMapper();
+    })
     .ModifyCostOptions(options =>
     {
         options.MaxFieldCost = 20_000;
@@ -71,9 +78,9 @@ builder.Services.AddSingleton<TokenProvider>()
         options.IncludeTotalCount = true;
         options.MaxPageSize = 100;
     });
-
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddValidatorsFromAssemblyContaining<AddTripInputValidator>();
 
 
 var app = builder.Build();

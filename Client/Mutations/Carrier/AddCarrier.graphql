@@ -7,7 +7,7 @@
             name
         }
         errors {
-            ... on CarrierNameAlreadyInUseError {
+            ... on Error {
                 message
             }
         }

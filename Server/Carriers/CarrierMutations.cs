@@ -25,6 +25,7 @@ public static class CarrierMutations
     }
     
     [Error<CarrierNotFoundException>]
+    [Error<CarrierNameAlreadyInUseException>]
     public static async Task<Carrier> RenameCarrierAsync(
         RenameCarrierInput input,
         ApplicationDbContext dbContext,
@@ -37,7 +38,14 @@ public static class CarrierMutations
         }
 
         carrier.Name = input.Name;
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+           throw new CarrierNameAlreadyInUseException(); 
+        }
         return carrier;
     }
     [Authorize(Policy = "IsManagerOrAdmin")]

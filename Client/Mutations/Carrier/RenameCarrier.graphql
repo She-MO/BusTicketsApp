@@ -8,7 +8,7 @@
             name
         }
         errors {
-            ... on CarrierNotFoundError {
+            ... on Error {
                 message
             }
         }

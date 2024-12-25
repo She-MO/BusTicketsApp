@@ -10,6 +10,7 @@ namespace BusTicketsApp.Server.Buses;
 public static class BusQueries
 {
     [UsePaging]
+    //[UseProjection]
     [UseFiltering]
     [UseSorting]
     public static IQueryable<Bus> GetBuses(ApplicationDbContext dbContext)

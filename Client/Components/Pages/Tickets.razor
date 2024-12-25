@@ -7,6 +7,10 @@
 @attribute [Authorize]
 
 <PageTitle>Your tickets</PageTitle>
+@foreach (var message in Errors ?? Enumerable.Empty<string>())
+{
+    <MudAlert Severity="Severity.Error">@message</MudAlert>
+}
 
 <MudDataGrid @ref="dataGrid" T="Ticket" ServerData="ReloadData" Filterable="false">
     <ToolBarContent>
@@ -130,19 +134,21 @@
             return;
         }
 
-        /*
         if (result.Data?.CancelTicket.Errors is not null)
         {
-            foreach (var error in result.Data.RemoveTicket.Errors)
+            foreach (var error in result.Data.CancelTicket.Errors)
             {
-                if (error is IDeleteTicket_RemoveTicket_Errors_TicketBusUsedInTripError castedError)
+                if (error is ICancelTickets_CancelTicket_Errors_CannotCancelTicketForTripThatAlreadyHappened castedError)
                 {
                     Errors.Add(castedError.Message);
+                }
+                if (error is ICancelTickets_CancelTicket_Errors_UserIsNotAuthorizedToCancelTicketError castedError1)
+                {
+                    Errors.Add(castedError1.Message);
                 }
             }
             return;
         }
-        */
 
         if (result.Data.CancelTicket.Boolean == true)
         {

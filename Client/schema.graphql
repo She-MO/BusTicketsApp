@@ -3,151 +3,25 @@ schema {
   mutation: Mutation
 }
 
-input RemoveTripInput {
-  tripId: ID!
+input RouteStopFilterInput {
+  and: [RouteStopFilterInput!]
+  or: [RouteStopFilterInput!]
+  routeId: IntOperationFilterInput
+  route: RouteFilterInput
+  cityId: IntOperationFilterInput
+  city: CityFilterInput
+  sequence: ByteOperationFilterInput
+  timeFromPrevStop: TimeSpanOperationFilterInput
+  kmFromPrevStop: IntOperationFilterInput
+  tripSeats: ListFilterInputTypeOfTripSeatsFilterInput
 }
 
-type RemoveCarrierPayload {
-  boolean: Boolean
-  errors: [RemoveCarrierError!]
-}
-
-"A connection to a list of items."
-type TripsConnection {
-  "Information to aid in pagination."
-  pageInfo: PageInfo!
-  "A list of edges."
-  edges: [TripsEdge!]
-  "A flattened list of the nodes."
-  nodes: [Trip!]
-  "Identifies the total count of items in the connection."
-  totalCount: Int!
-}
-
-type AddTimetablePayload {
-  timetable: Timetable
-  errors: [AddTimetableError!]
-}
-
-union AddRouteError = RouteNameIsAlreadyInUseError
-
-type TripAggregatedDataByMonth {
-  month: Int!
-  numberOfTickets: Int!
-  numberOfTrips: Int!
-  numberOfPassengers: Int!
-  totalIncome: Decimal!
-  averagePrice: Decimal!
-}
-
-input CarrierSortInput {
-  id: SortEnumType
-  name: SortEnumType
-}
-
-"An edge in a connection."
-type BusesEdge {
-  "A cursor for use in pagination."
-  cursor: String!
-  "The item at the end of the edge."
-  node: Bus!
-}
-
-"An edge in a connection."
-type RoutesEdge {
-  "A cursor for use in pagination."
-  cursor: String!
-  "The item at the end of the edge."
-  node: Route!
-}
-
-"A connection to a list of items."
-type UsersConnection {
-  "Information to aid in pagination."
-  pageInfo: PageInfo!
-  "A list of edges."
-  edges: [UsersEdge!]
-  "A flattened list of the nodes."
-  nodes: [User!]
-  "Identifies the total count of items in the connection."
-  totalCount: Int!
-}
-
-union RemoveCarrierError = OneOfCarrierBusesUsedInTripError
-
-input BusSortInput {
-  id: SortEnumType
-  numberOfSeats: SortEnumType
-  busNumber: SortEnumType
-  carrierId: SortEnumType
-  carrier: CarrierSortInput
-}
-
-union RenameCityError = CityNotFoundError
-
-type RouteIsUsedInTimetableError implements Error {
+type TimetableUsedInTripError implements Error {
   message: String!
 }
 
-input RemoveTimetableInput {
-  id: ID!
-}
-
-type CarrierNameAlreadyInUseError implements Error {
+type CityNameAlreadyInUseError implements Error {
   message: String!
-}
-
-type AddCarrierPayload {
-  carrier: Carrier
-  errors: [AddCarrierError!]
-}
-
-type TripSeats {
-  tripId: Int!
-  routeId: Int!
-  sequence: Byte!
-  routeStop: RouteStop
-  availableSeats: Byte!
-}
-
-"An edge in a connection."
-type TimetablesEdge {
-  "A cursor for use in pagination."
-  cursor: String!
-  "The item at the end of the edge."
-  node: Timetable!
-}
-
-input RegisterUserInput {
-  email: String!
-  password: String!
-  phone: String!
-}
-
-"A connection to a list of items."
-type TimetablesConnection {
-  "Information to aid in pagination."
-  pageInfo: PageInfo!
-  "A list of edges."
-  edges: [TimetablesEdge!]
-  "A flattened list of the nodes."
-  nodes: [Timetable!]
-  "Identifies the total count of items in the connection."
-  totalCount: Int!
-}
-
-union AddCarrierError = CarrierNameAlreadyInUseError
-
-"A connection to a list of items."
-type CitiesConnection {
-  "Information to aid in pagination."
-  pageInfo: PageInfo!
-  "A list of edges."
-  edges: [CitiesEdge!]
-  "A flattened list of the nodes."
-  nodes: [City!]
-  "Identifies the total count of items in the connection."
-  totalCount: Int!
 }
 
 input CityFilterInput {
@@ -157,50 +31,21 @@ input CityFilterInput {
   name: StringOperationFilterInput
 }
 
-input DateOperationFilterInput {
-  eq: Date
-  neq: Date
-  in: [Date]
-  nin: [Date]
-  gt: Date
-  ngt: Date
-  gte: Date
-  ngte: Date
-  lt: Date
-  nlt: Date
-  lte: Date
-  nlte: Date
+enum SortEnumType {
+  ASC
+  DESC
 }
 
-type CarrierAggregatedDataByMonth {
+type AddCarrierPayload {
   carrier: Carrier
-  aggregatedData: [TripAggregatedDataByMonth!]
+  errors: [AddCarrierError!]
 }
 
-type Carrier implements Node {
-  buses("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String): BusesConnection
-  id: ID!
-  name: String!
+type CannotBuyTicketsIfLessThanOneHourLeftBeforeTripError implements Error {
+  message: String!
 }
 
-input ByteOperationFilterInput {
-  eq: Byte
-  neq: Byte
-  in: [Byte]
-  nin: [Byte]
-  gt: Byte
-  ngt: Byte
-  gte: Byte
-  ngte: Byte
-  lt: Byte
-  nlt: Byte
-  lte: Byte
-  nlte: Byte
-}
-
-input AddCarrierInput {
-  name: String!
-}
+union AddTimetableError = TimetableWithThisSettingsAlreadyExists
 
 input DecimalOperationFilterInput {
   eq: Decimal
@@ -217,308 +62,14 @@ input DecimalOperationFilterInput {
   nlte: Decimal
 }
 
-union RenameCarrierError = CarrierNotFoundError
-
-input CarrierFilterInput {
-  and: [CarrierFilterInput!]
-  or: [CarrierFilterInput!]
-  id: IntOperationFilterInput
-  name: StringOperationFilterInput
-  buses: ListFilterInputTypeOfBusFilterInput
-}
-
-"A connection to a list of items."
-type CarriersConnection {
-  "Information to aid in pagination."
-  pageInfo: PageInfo!
-  "A list of edges."
-  edges: [CarriersEdge!]
-  "A flattened list of the nodes."
-  nodes: [Carrier!]
-  "Identifies the total count of items in the connection."
-  totalCount: Int!
-}
-
-input TimetableSortInput {
-  id: SortEnumType
-  routeId: SortEnumType
-  route: RouteSortInput
-  timeOfDeparture: SortEnumType
-  timeOfArrival: SortEnumType
-  dayOfWeek: SortEnumType
-}
-
-input TicketFilterInput {
-  and: [TicketFilterInput!]
-  or: [TicketFilterInput!]
-  id: IntOperationFilterInput
-  numberOfPassengers: ByteOperationFilterInput
-  tripId: IntOperationFilterInput
-  trip: TripFilterInput
-  userId: IntOperationFilterInput
-  user: UserFilterInput
-  startCityId: IntOperationFilterInput
-  startCity: CityFilterInput
-  endCityId: IntOperationFilterInput
-  endCity: CityFilterInput
-  totalPrice: DecimalOperationFilterInput
-}
-
-input RouteStopFilterInput {
-  and: [RouteStopFilterInput!]
-  or: [RouteStopFilterInput!]
-  routeId: IntOperationFilterInput
-  route: RouteFilterInput
-  cityId: IntOperationFilterInput
-  city: CityFilterInput
-  sequence: ByteOperationFilterInput
-  timeFromPrevStop: TimeSpanOperationFilterInput
-  kmFromPrevStop: IntOperationFilterInput
-  tripSeats: ListFilterInputTypeOfTripSeatsFilterInput
-}
-
-type OneOfTheCitiesIsNotPartOfTheRouteError implements Error {
-  message: String!
-}
-
-type TimetableAggregatedDataByMonth {
-  timetable: Timetable
-  aggregatedData: [TripAggregatedDataByMonth!]
-}
-
-type LogInUserPayload {
-  string: String
-}
-
-input DayOfWeekOperationFilterInput {
-  eq: DayOfWeek
-  neq: DayOfWeek
-  in: [DayOfWeek!]
-  nin: [DayOfWeek!]
-}
-
-type Bus implements Node {
-  carrier: Carrier
-  id: ID!
-  numberOfSeats: Int!
-  busNumber: String!
-  carrierId: Int!
-  trips: [Trip!]!
-}
-
-input RemoveRouteInput {
-  id: ID!
-}
-
 union CancelTicketError = UserIsNotAuthorizedToCancelTicketError | CannotCancelTicketForTripThatAlreadyHappened
 
-input AddTimetableInput {
-  routeId: ID!
-  timeOfDeparture: TimeSpan!
-  dayOfWeek: DayOfWeek!
-}
-
-"The `Decimal` scalar type represents a decimal floating-point number."
-scalar Decimal
-
-"A connection to a list of items."
-type BusesConnection {
-  "Information to aid in pagination."
-  pageInfo: PageInfo!
-  "A list of edges."
-  edges: [BusesEdge!]
-  "A flattened list of the nodes."
-  nodes: [Bus!]
-  "Identifies the total count of items in the connection."
-  totalCount: Int!
-}
-
-type TripWithThisSettingsAlreadyExists implements Error {
-  message: String!
-}
-
-input RouteStopInput {
-  cityId: ID!
-  timeFromPrevStop: TimeSpan!
-  kmFromPrevStop: Int!
-}
-
-type CityNotFoundError implements Error {
-  message: String!
-}
-
-type RenameCarrierPayload {
-  carrier: Carrier
-  errors: [RenameCarrierError!]
-}
-
-type RemoveRoutePayload {
-  boolean: Boolean
-  errors: [RemoveRouteError!]
-}
-
-type CancelTicketPayload {
-  boolean: Boolean
-  errors: [CancelTicketError!]
-}
-
-type NotEnoughSeatsError implements Error {
-  message: String!
-}
-
-type TimetableAggregatedDataByYear {
-  timetable: Timetable
-  aggregatedData: [TripAggregatedDataByYear!]
-}
-
-type RouteNameIsAlreadyInUseError implements Error {
-  message: String!
-}
-
-"The `Date` scalar represents an ISO-8601 compliant date type."
-scalar Date
-
-type EmailAlreadyInUseError implements Error {
-  message: String!
-}
-
-input CancelTicketInput {
-  id: ID!
-}
-
 "An edge in a connection."
-type UsersEdge {
+type CitiesEdge {
   "A cursor for use in pagination."
   cursor: String!
   "The item at the end of the edge."
-  node: User!
-}
-
-input StringOperationFilterInput {
-  and: [StringOperationFilterInput!]
-  or: [StringOperationFilterInput!]
-  eq: String
-  neq: String
-  contains: String
-  ncontains: String
-  in: [String]
-  nin: [String]
-  startsWith: String
-  nstartsWith: String
-  endsWith: String
-  nendsWith: String
-}
-
-"An edge in a connection."
-type TicketsByUserIdEdge {
-  "A cursor for use in pagination."
-  cursor: String!
-  "The item at the end of the edge."
-  node: Ticket!
-}
-
-type TripAggregatedDataByYear {
-  year: Int!
-  numberOfTickets: Int!
-  numberOfTrips: Int!
-  numberOfPassengers: Int!
-  totalIncome: Decimal!
-  averagePrice: Decimal!
-}
-
-type AddCityPayload {
-  city: City
-  errors: [AddCityError!]
-}
-
-union RemoveTimetableError = TimetableUsedInTripError
-
-input UserFilterInput {
-  and: [UserFilterInput!]
-  or: [UserFilterInput!]
-  id: IntOperationFilterInput
-  email: StringOperationFilterInput
-  password: StringOperationFilterInput
-  phone: StringOperationFilterInput
-  role: RolesOperationFilterInput
-  tickets: ListFilterInputTypeOfTicketFilterInput
-}
-
-type RemoveBusPayload {
-  boolean: Boolean
-  errors: [RemoveBusError!]
-}
-
-input ListFilterInputTypeOfTripFilterInput {
-  all: TripFilterInput
-  none: TripFilterInput
-  some: TripFilterInput
-  any: Boolean
-}
-
-"An edge in a connection."
-type CarriersEdge {
-  "A cursor for use in pagination."
-  cursor: String!
-  "The item at the end of the edge."
-  node: Carrier!
-}
-
-type RemoveCityPayload {
-  boolean: Boolean
-  errors: [RemoveCityError!]
-}
-
-input LogInUserInput {
-  email: String!
-  password: String!
-}
-
-input ListFilterInputTypeOfTripSeatsFilterInput {
-  all: TripSeatsFilterInput
-  none: TripSeatsFilterInput
-  some: TripSeatsFilterInput
-  any: Boolean
-}
-
-interface Error {
-  message: String!
-}
-
-type Trip implements Node {
-  timetable: Timetable
-  bus: Bus
-  tickets: [Ticket!]!
-  tripSeats: [TripSeats!]!
-  busId: ID!
-  timetableId: ID!
-  id: ID!
-  date: Date!
-  pricePerKm: Decimal!
-}
-
-type Timetable implements Node {
-  route: Route
-  routeId: ID!
-  id: ID!
-  timeOfDeparture: TimeSpan!
-  timeOfArrival: TimeSpan!
-  dayOfWeek: DayOfWeek!
-  trips: [Trip!]!
-}
-
-input TripFilterInput {
-  and: [TripFilterInput!]
-  or: [TripFilterInput!]
-  id: IntOperationFilterInput
-  busId: IntOperationFilterInput
-  bus: BusFilterInput
-  timetableId: IntOperationFilterInput
-  timetable: TimetableFilterInput
-  date: DateOperationFilterInput
-  pricePerKm: DecimalOperationFilterInput
-  tickets: ListFilterInputTypeOfTicketFilterInput
-  tripSeats: ListFilterInputTypeOfTripSeatsFilterInput
+  node: City!
 }
 
 "Information about pagination in a connection."
@@ -533,34 +84,222 @@ type PageInfo {
   endCursor: String
 }
 
-type UserIsNotAuthorizedToCancelTicketError implements Error {
+input AddTripInput {
+  busId: ID!
+  timetableId: ID!
+  date: Date!
+  pricePerKm: Decimal!
+}
+
+union AddTripError = TripWithThisSettingsAlreadyExists
+
+type RemoveTimetablePayload {
+  boolean: Boolean
+  errors: [RemoveTimetableError!]
+}
+
+union RenameCarrierError = CarrierNotFoundError | CarrierNameAlreadyInUseError
+
+union BuyTicketError = OneOfTheCitiesIsNotPartOfTheRouteError | IncorrectCitySequence | NotEnoughSeatsError | CannotBuyTicketsIfLessThanOneHourLeftBeforeTripError
+
+type TimetableAggregatedDataByYear {
+  timetable: Timetable
+  aggregatedData: [TripAggregatedDataByYear!]
+}
+
+"A connection to a list of items."
+type TripsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [TripsEdge!]
+  "A flattened list of the nodes."
+  nodes: [Trip!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int!
+}
+
+union RemoveRouteError = RouteIsUsedInTimetableError
+
+type RenameCityPayload {
+  city: City
+  errors: [RenameCityError!]
+}
+
+union RemoveCarrierError = OneOfCarrierBusesUsedInTripError
+
+input RegisterUserInput {
+  email: String!
+  password: String!
+  phone: String!
+}
+
+input UserFilterInput {
+  and: [UserFilterInput!]
+  or: [UserFilterInput!]
+  id: IntOperationFilterInput
+  email: StringOperationFilterInput
+  password: StringOperationFilterInput
+  phone: StringOperationFilterInput
+  role: RolesOperationFilterInput
+  tickets: ListFilterInputTypeOfTicketFilterInput
+}
+
+input UserSortInput {
+  id: SortEnumType
+  email: SortEnumType
+  password: SortEnumType
+  phone: SortEnumType
+  role: SortEnumType
+}
+
+type RenameCarrierPayload {
+  carrier: Carrier
+  errors: [RenameCarrierError!]
+}
+
+"An edge in a connection."
+type TimetablesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Timetable!
+}
+
+"A connection to a list of items."
+type TicketsByUserIdConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [TicketsByUserIdEdge!]
+  "A flattened list of the nodes."
+  nodes: [Ticket!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int!
+}
+
+union AddCarrierError = CarrierNameAlreadyInUseError
+
+type TimetableWithThisSettingsAlreadyExists implements Error {
   message: String!
 }
 
-type TimetableUsedInTripError implements Error {
-  message: String!
+"An edge in a connection."
+type UsersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: User!
+}
+
+union RegisterUserError = EmailAlreadyInUseError
+
+"A connection to a list of items."
+type BusesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [BusesEdge!]
+  "A flattened list of the nodes."
+  nodes: [Bus!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int!
+}
+
+"An edge in a connection."
+type TicketsByUserIdEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Ticket!
 }
 
 union AddBusError = IncorrectNumberOfSeatsError | BusNumberAlreadyInUseError
 
-input RolesOperationFilterInput {
-  eq: Roles
-  neq: Roles
-  in: [Roles!]
-  nin: [Roles!]
+input ListFilterInputTypeOfTripSeatsFilterInput {
+  all: TripSeatsFilterInput
+  none: TripSeatsFilterInput
+  some: TripSeatsFilterInput
+  any: Boolean
 }
 
-type Route implements Node {
-  routeStops: [RouteStop!]!
-  timetables: [Timetable!]!
-  id: ID!
-  shortName: String
-  lengthInKm: Int!
+"An edge in a connection."
+type CarriersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Carrier!
 }
 
-input RenameCityInput {
+"A connection to a list of items."
+type CitiesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [CitiesEdge!]
+  "A flattened list of the nodes."
+  nodes: [City!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int!
+}
+
+type Timetable implements Node {
+  route: Route
+  routeId: ID!
   id: ID!
-  name: String!
+  timeOfDeparture: TimeSpan!
+  timeOfArrival: TimeSpan!
+  dayOfWeek: DayOfWeek!
+  trips: [Trip!]!
+}
+
+"A connection to a list of items."
+type UsersConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [UsersEdge!]
+  "A flattened list of the nodes."
+  nodes: [User!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int!
+}
+
+input RemoveBusInput {
+  id: ID!
+}
+
+input TimeSpanOperationFilterInput {
+  eq: TimeSpan
+  neq: TimeSpan
+  in: [TimeSpan]
+  nin: [TimeSpan]
+  gt: TimeSpan
+  ngt: TimeSpan
+  gte: TimeSpan
+  ngte: TimeSpan
+  lt: TimeSpan
+  nlt: TimeSpan
+  lte: TimeSpan
+  nlte: TimeSpan
+}
+
+type LogInUserPayload {
+  string: String
+}
+
+type Ticket implements Node {
+  user: User
+  trip: Trip
+  userId: ID!
+  id: ID!
+  numberOfPassengers: Byte!
+  tripId: Int!
+  startCityId: Int!
+  startCity: City
+  endCityId: Int!
+  endCity: City
+  totalPrice: Decimal!
 }
 
 type Mutation {
@@ -584,44 +323,112 @@ type Mutation {
   logInUser(input: LogInUserInput!): LogInUserPayload!
 }
 
-type TimetableWithThisSettingsAlreadyExists implements Error {
+"A connection to a list of items."
+type RoutesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [RoutesEdge!]
+  "A flattened list of the nodes."
+  nodes: [Route!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int!
+}
+
+input TripSortInput {
+  id: SortEnumType
+  busId: SortEnumType
+  bus: BusSortInput
+  timetableId: SortEnumType
+  timetable: TimetableSortInput
+  date: SortEnumType
+  pricePerKm: SortEnumType
+}
+
+type CityNotFoundError implements Error {
   message: String!
 }
 
-input ListFilterInputTypeOfRouteStopFilterInput {
-  all: RouteStopFilterInput
-  none: RouteStopFilterInput
-  some: RouteStopFilterInput
-  any: Boolean
+type AddCityPayload {
+  city: City
+  errors: [AddCityError!]
 }
 
-union RemoveRouteError = RouteIsUsedInTimetableError
-
-type AddTripPayload {
-  trip: Trip
-  errors: [AddTripError!]
+type CarrierNotFoundError implements Error {
+  message: String!
 }
 
-enum Roles {
-  USER
-  MANAGER
-  ADMIN
+"An edge in a connection."
+type TripsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Trip!
 }
 
-union RemoveBusError = BusUsedInTripError
+input ByteOperationFilterInput {
+  eq: Byte
+  neq: Byte
+  in: [Byte]
+  nin: [Byte]
+  gt: Byte
+  ngt: Byte
+  gte: Byte
+  ngte: Byte
+  lt: Byte
+  nlt: Byte
+  lte: Byte
+  nlte: Byte
+}
 
-type Ticket implements Node {
-  user: User
-  trip: Trip
-  userId: ID!
+type RemoveCarrierPayload {
+  boolean: Boolean
+  errors: [RemoveCarrierError!]
+}
+
+input RemoveTimetableInput {
   id: ID!
-  numberOfPassengers: Byte!
-  tripId: Int!
-  startCityId: Int!
-  startCity: City
-  endCityId: Int!
-  endCity: City
-  totalPrice: Decimal!
+}
+
+input RenameCarrierInput {
+  id: ID!
+  name: String!
+}
+
+type RemoveCityPayload {
+  boolean: Boolean
+  errors: [RemoveCityError!]
+}
+
+input IntOperationFilterInput {
+  eq: Int
+  neq: Int
+  in: [Int]
+  nin: [Int]
+  gt: Int
+  ngt: Int
+  gte: Int
+  ngte: Int
+  lt: Int
+  nlt: Int
+  lte: Int
+  nlte: Int
+}
+
+type BusNumberAlreadyInUseError implements Error {
+  message: String!
+}
+
+input TimetableFilterInput {
+  and: [TimetableFilterInput!]
+  or: [TimetableFilterInput!]
+  id: IntOperationFilterInput
+  routeId: IntOperationFilterInput
+  route: RouteFilterInput
+  timeOfDeparture: TimeSpanOperationFilterInput
+  timeOfArrival: TimeSpanOperationFilterInput
+  dayOfWeek: DayOfWeekOperationFilterInput
+  trips: ListFilterInputTypeOfTripFilterInput
 }
 
 type Query {
@@ -663,76 +470,25 @@ type Query {
   ticketsByUserId("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String): TicketsByUserIdConnection
 }
 
-type AddBusPayload {
-  bus: Bus
-  errors: [AddBusError!]
+input ListFilterInputTypeOfTicketFilterInput {
+  all: TicketFilterInput
+  none: TicketFilterInput
+  some: TicketFilterInput
+  any: Boolean
 }
 
-type CityNameAlreadyInUseError implements Error {
-  message: String!
+type RouteAggregatedDataByMonth {
+  route: Route
+  aggregatedData: [TripAggregatedDataByMonth!]
 }
 
-type IncorrectNumberOfSeatsError implements Error {
-  message: String!
+"The node interface is implemented by entities that have a global unique identifier."
+interface Node {
+  id: ID!
 }
 
-type CityUsedInRouteError implements Error {
-  message: String!
-}
-
-input TimeSpanOperationFilterInput {
-  eq: TimeSpan
-  neq: TimeSpan
-  in: [TimeSpan]
-  nin: [TimeSpan]
-  gt: TimeSpan
-  ngt: TimeSpan
-  gte: TimeSpan
-  ngte: TimeSpan
-  lt: TimeSpan
-  nlt: TimeSpan
-  lte: TimeSpan
-  nlte: TimeSpan
-}
-
-input BuyTicketInput {
-  tripId: ID!
-  fromCityId: ID!
-  toCityId: ID!
-  numberOfPassengers: Int!
-}
-
-"A connection to a list of items."
-type RoutesConnection {
-  "Information to aid in pagination."
-  pageInfo: PageInfo!
-  "A list of edges."
-  edges: [RoutesEdge!]
-  "A flattened list of the nodes."
-  nodes: [Route!]
-  "Identifies the total count of items in the connection."
-  totalCount: Int!
-}
-
-type RemoveTimetablePayload {
-  boolean: Boolean
-  errors: [RemoveTimetableError!]
-}
-
-input AddCityInput {
-  name: String!
-}
-
-type IncorrectCitySequence implements Error {
-  message: String!
-}
-
-"The `Byte` scalar type represents non-fractional whole numeric values. Byte can represent values between 0 and 255."
-scalar Byte
-
-type CarrierAggregatedDataByYear {
-  carrier: Carrier
-  aggregatedData: [TripAggregatedDataByYear!]
+input RemoveCarrierInput {
+  id: ID!
 }
 
 input RouteSortInput {
@@ -741,13 +497,250 @@ input RouteSortInput {
   lengthInKm: SortEnumType
 }
 
-input RemoveCityInput {
+input StringOperationFilterInput {
+  and: [StringOperationFilterInput!]
+  or: [StringOperationFilterInput!]
+  eq: String
+  neq: String
+  contains: String
+  ncontains: String
+  in: [String]
+  nin: [String]
+  startsWith: String
+  nstartsWith: String
+  endsWith: String
+  nendsWith: String
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+type CityUsedInRouteError implements Error {
+  message: String!
+}
+
+type City implements Node {
+  id: ID!
+  name: String!
+}
+
+type CancelTicketPayload {
+  boolean: Boolean
+  errors: [CancelTicketError!]
+}
+
+input RouteStopInput {
+  cityId: ID!
+  timeFromPrevStop: TimeSpan!
+  kmFromPrevStop: Int!
+}
+
+type Trip implements Node {
+  timetable: Timetable
+  bus: Bus
+  tickets: [Ticket!]!
+  tripSeats: [TripSeats!]!
+  busId: ID!
+  timetableId: ID!
+  id: ID!
+  date: Date!
+  pricePerKm: Decimal!
+}
+
+input RemoveRouteInput {
   id: ID!
 }
 
-input CitySortInput {
+input ListFilterInputTypeOfTripFilterInput {
+  all: TripFilterInput
+  none: TripFilterInput
+  some: TripFilterInput
+  any: Boolean
+}
+
+input ListFilterInputTypeOfTimetableFilterInput {
+  all: TimetableFilterInput
+  none: TimetableFilterInput
+  some: TimetableFilterInput
+  any: Boolean
+}
+
+type CannotCancelTicketForTripThatAlreadyHappened implements Error {
+  message: String!
+}
+
+"A connection to a list of items."
+type CarriersConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [CarriersEdge!]
+  "A flattened list of the nodes."
+  nodes: [Carrier!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int!
+}
+
+"An edge in a connection."
+type RoutesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Route!
+}
+
+type TimetableAggregatedDataByMonth {
+  timetable: Timetable
+  aggregatedData: [TripAggregatedDataByMonth!]
+}
+
+type AddTimetablePayload {
+  timetable: Timetable
+  errors: [AddTimetableError!]
+}
+
+type RemoveBusPayload {
+  boolean: Boolean
+  errors: [RemoveBusError!]
+}
+
+input AddCityInput {
+  name: String!
+}
+
+type IncorrectNumberOfSeatsError implements Error {
+  message: String!
+}
+
+type OneOfCarrierBusesUsedInTripError implements Error {
+  message: String!
+}
+
+union AddRouteError = RouteNameIsAlreadyInUseError
+
+input ListFilterInputTypeOfBusFilterInput {
+  all: BusFilterInput
+  none: BusFilterInput
+  some: BusFilterInput
+  any: Boolean
+}
+
+input BusSortInput {
+  id: SortEnumType
+  numberOfSeats: SortEnumType
+  busNumber: SortEnumType
+  carrierId: SortEnumType
+  carrier: CarrierSortInput
+}
+
+"A connection to a list of items."
+type TimetablesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [TimetablesEdge!]
+  "A flattened list of the nodes."
+  nodes: [Timetable!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int!
+}
+
+input LogInUserInput {
+  email: String!
+  password: String!
+}
+
+type CarrierAggregatedDataByYear {
+  carrier: Carrier
+  aggregatedData: [TripAggregatedDataByYear!]
+}
+
+type TripWithThisSettingsAlreadyExists implements Error {
+  message: String!
+}
+
+input CarrierSortInput {
   id: SortEnumType
   name: SortEnumType
+}
+
+"The `TimeSpan` scalar represents an ISO-8601 compliant duration type."
+scalar TimeSpan
+
+type OneOfTheCitiesIsNotPartOfTheRouteError implements Error {
+  message: String!
+}
+
+type UserIsNotAuthorizedToCancelTicketError implements Error {
+  message: String!
+}
+
+type AddRoutePayload {
+  route: Route
+  errors: [AddRouteError!]
+}
+
+input TimetableSortInput {
+  id: SortEnumType
+  routeId: SortEnumType
+  route: RouteSortInput
+  timeOfDeparture: SortEnumType
+  timeOfArrival: SortEnumType
+  dayOfWeek: SortEnumType
+}
+
+input RouteFilterInput {
+  and: [RouteFilterInput!]
+  or: [RouteFilterInput!]
+  id: IntOperationFilterInput
+  shortName: StringOperationFilterInput
+  lengthInKm: IntOperationFilterInput
+  routeStops: ListFilterInputTypeOfRouteStopFilterInput
+  timetables: ListFilterInputTypeOfTimetableFilterInput
+}
+
+input AddCarrierInput {
+  name: String!
+}
+
+type User implements Node {
+  id: ID!
+  email: String!
+  password: String!
+  phone: String
+  role: Roles!
+  tickets: [Ticket!]!
+}
+
+input RemoveTripInput {
+  tripId: ID!
+}
+
+input CancelTicketInput {
+  id: ID!
+}
+
+input RenameCityInput {
+  id: ID!
+  name: String!
+}
+
+union RemoveCityError = CityUsedInRouteError
+
+type BuyTicketPayload {
+  ticket: Ticket
+  errors: [BuyTicketError!]
+}
+
+type EmailAlreadyInUseError implements Error {
+  message: String!
 }
 
 type RouteStop {
@@ -761,111 +754,139 @@ type RouteStop {
   tripSeats: [TripSeats!]!
 }
 
-input IntOperationFilterInput {
-  eq: Int
-  neq: Int
-  in: [Int]
-  nin: [Int]
-  gt: Int
-  ngt: Int
-  gte: Int
-  ngte: Int
-  lt: Int
-  nlt: Int
-  lte: Int
-  nlte: Int
+input TripFilterInput {
+  and: [TripFilterInput!]
+  or: [TripFilterInput!]
+  id: IntOperationFilterInput
+  busId: IntOperationFilterInput
+  bus: BusFilterInput
+  timetableId: IntOperationFilterInput
+  timetable: TimetableFilterInput
+  date: DateOperationFilterInput
+  pricePerKm: DecimalOperationFilterInput
+  tickets: ListFilterInputTypeOfTicketFilterInput
+  tripSeats: ListFilterInputTypeOfTripSeatsFilterInput
 }
 
-input ListFilterInputTypeOfTicketFilterInput {
-  all: TicketFilterInput
-  none: TicketFilterInput
-  some: TicketFilterInput
-  any: Boolean
-}
-
-union BuyTicketError = OneOfTheCitiesIsNotPartOfTheRouteError | IncorrectCitySequence | NotEnoughSeatsError
-
-input FindTripInput {
-  fromCityId: ID!
-  toCityId: ID!
-  date: Date!
-  numberOfPassengers: Int!
-}
-
-type OneOfCarrierBusesUsedInTripError implements Error {
-  message: String!
-}
-
-input RemoveCarrierInput {
-  id: ID!
-}
-
-input ListFilterInputTypeOfTimetableFilterInput {
-  all: TimetableFilterInput
-  none: TimetableFilterInput
-  some: TimetableFilterInput
-  any: Boolean
-}
-
-type BuyTicketPayload {
-  ticket: Ticket
-  errors: [BuyTicketError!]
-}
-
-type CannotCancelTicketForTripThatAlreadyHappened implements Error {
-  message: String!
-}
-
-enum SortEnumType {
-  ASC
-  DESC
+input AddBusInput {
+  busNumber: String!
+  numberOfSeats: Int!
+  carrierId: ID!
 }
 
 "An edge in a connection."
-type TripsEdge {
+type BusesEdge {
   "A cursor for use in pagination."
   cursor: String!
   "The item at the end of the edge."
-  node: Trip!
+  node: Bus!
 }
 
-input TripSortInput {
-  id: SortEnumType
-  busId: SortEnumType
-  bus: BusSortInput
-  timetableId: SortEnumType
-  timetable: TimetableSortInput
-  date: SortEnumType
-  pricePerKm: SortEnumType
-}
-
-input TripSeatsFilterInput {
-  and: [TripSeatsFilterInput!]
-  or: [TripSeatsFilterInput!]
+input TicketFilterInput {
+  and: [TicketFilterInput!]
+  or: [TicketFilterInput!]
+  id: IntOperationFilterInput
+  numberOfPassengers: ByteOperationFilterInput
   tripId: IntOperationFilterInput
-  routeId: IntOperationFilterInput
-  sequence: ByteOperationFilterInput
-  routeStop: RouteStopFilterInput
-  availableSeats: ByteOperationFilterInput
+  trip: TripFilterInput
+  userId: IntOperationFilterInput
+  user: UserFilterInput
+  startCityId: IntOperationFilterInput
+  startCity: CityFilterInput
+  endCityId: IntOperationFilterInput
+  endCity: CityFilterInput
+  totalPrice: DecimalOperationFilterInput
 }
 
-"An edge in a connection."
-type CitiesEdge {
-  "A cursor for use in pagination."
-  cursor: String!
-  "The item at the end of the edge."
-  node: City!
+type CarrierNameAlreadyInUseError implements Error {
+  message: String!
 }
 
-input RenameCarrierInput {
+type NotEnoughSeatsError implements Error {
+  message: String!
+}
+
+type Bus implements Node {
+  carrier: Carrier
   id: ID!
-  name: String!
+  numberOfSeats: Int!
+  busNumber: String!
+  carrierId: Int!
+  trips: [Trip!]!
+}
+
+type TripAggregatedDataByYear {
+  year: Int!
+  numberOfTickets: Int!
+  numberOfTrips: Int!
+  numberOfPassengers: Int!
+  totalIncome: Decimal!
+  averagePrice: Decimal!
+}
+
+input CarrierFilterInput {
+  and: [CarrierFilterInput!]
+  or: [CarrierFilterInput!]
+  id: IntOperationFilterInput
+  name: StringOperationFilterInput
+  buses: ListFilterInputTypeOfBusFilterInput
+}
+
+input AddRouteInput {
+  shortName: String!
+  stops: [RouteStopInput!]!
+}
+
+type BusUsedInTripError implements Error {
+  message: String!
+}
+
+type CarrierAggregatedDataByMonth {
+  carrier: Carrier
+  aggregatedData: [TripAggregatedDataByMonth!]
+}
+
+type IncorrectCitySequence implements Error {
+  message: String!
+}
+
+"The `Byte` scalar type represents non-fractional whole numeric values. Byte can represent values between 0 and 255."
+scalar Byte
+
+interface Error {
+  message: String!
+}
+
+input ListFilterInputTypeOfRouteStopFilterInput {
+  all: RouteStopFilterInput
+  none: RouteStopFilterInput
+  some: RouteStopFilterInput
+  any: Boolean
+}
+
+type RouteIsUsedInTimetableError implements Error {
+  message: String!
+}
+
+enum Roles {
+  USER
+  MANAGER
+  ADMIN
 }
 
 type RouteAggregatedDataByYear {
   route: Route
   aggregatedData: [TripAggregatedDataByYear!]
 }
+
+union RemoveBusError = BusUsedInTripError
+
+type AddBusPayload {
+  bus: Bus
+  errors: [AddBusError!]
+}
+
+union RenameCityError = CityNotFoundError | CityNameAlreadyInUseError
 
 "Defines when a policy shall be executed."
 enum ApplyPolicy {
@@ -877,10 +898,32 @@ enum ApplyPolicy {
   VALIDATION
 }
 
-type RenameCityPayload {
-  city: City
-  errors: [RenameCityError!]
+input DayOfWeekOperationFilterInput {
+  eq: DayOfWeek
+  neq: DayOfWeek
+  in: [DayOfWeek!]
+  nin: [DayOfWeek!]
 }
+
+input RolesOperationFilterInput {
+  eq: Roles
+  neq: Roles
+  in: [Roles!]
+  nin: [Roles!]
+}
+
+type RemoveTripPayload {
+  boolean: Boolean
+}
+
+union AddCityError = CityNameAlreadyInUseError
+
+input RemoveCityInput {
+  id: ID!
+}
+
+"The `Decimal` scalar type represents a decimal floating-point number."
+scalar Decimal
 
 input BusFilterInput {
   and: [BusFilterInput!]
@@ -893,144 +936,105 @@ input BusFilterInput {
   trips: ListFilterInputTypeOfTripFilterInput
 }
 
-union RemoveCityError = CityUsedInRouteError
-
-input RemoveBusInput {
-  id: ID!
+input AddTimetableInput {
+  routeId: ID!
+  timeOfDeparture: TimeSpan!
+  dayOfWeek: DayOfWeek!
 }
 
-input AddBusInput {
-  busNumber: String!
-  numberOfSeats: Int!
-  carrierId: ID!
+type AddTripPayload {
+  trip: Trip
+  errors: [AddTripError!]
 }
 
-type BusNumberAlreadyInUseError implements Error {
+"The `Date` scalar represents an ISO-8601 compliant date type."
+scalar Date
+
+union RemoveTimetableError = TimetableUsedInTripError
+
+type TripAggregatedDataByMonth {
+  month: Int!
+  numberOfTickets: Int!
+  numberOfTrips: Int!
+  numberOfPassengers: Int!
+  totalIncome: Decimal!
+  averagePrice: Decimal!
+}
+
+type RouteNameIsAlreadyInUseError implements Error {
   message: String!
 }
 
-input ListFilterInputTypeOfBusFilterInput {
-  all: BusFilterInput
-  none: BusFilterInput
-  some: BusFilterInput
-  any: Boolean
+input BuyTicketInput {
+  tripId: ID!
+  fromCityId: ID!
+  toCityId: ID!
+  numberOfPassengers: Int!
 }
 
-type AddRoutePayload {
-  route: Route
-  errors: [AddRouteError!]
+type TripSeats {
+  tripId: Int!
+  routeId: Int!
+  sequence: Byte!
+  routeStop: RouteStop
+  availableSeats: Byte!
 }
 
-type RemoveTripPayload {
+type RemoveRoutePayload {
   boolean: Boolean
+  errors: [RemoveRouteError!]
 }
 
-"The node interface is implemented by entities that have a global unique identifier."
-interface Node {
-  id: ID!
-}
-
-type User implements Node {
-  id: ID!
-  email: String!
-  password: String!
-  phone: String
-  role: Roles!
-  tickets: [Ticket!]!
-}
-
-union AddTripError = TripWithThisSettingsAlreadyExists
-
-input UserSortInput {
+input CitySortInput {
   id: SortEnumType
-  email: SortEnumType
-  password: SortEnumType
-  phone: SortEnumType
-  role: SortEnumType
+  name: SortEnumType
 }
 
-"The `TimeSpan` scalar represents an ISO-8601 compliant duration type."
-scalar TimeSpan
-
-input RouteFilterInput {
-  and: [RouteFilterInput!]
-  or: [RouteFilterInput!]
-  id: IntOperationFilterInput
-  shortName: StringOperationFilterInput
-  lengthInKm: IntOperationFilterInput
-  routeStops: ListFilterInputTypeOfRouteStopFilterInput
-  timetables: ListFilterInputTypeOfTimetableFilterInput
+type Route implements Node {
+  routeStops: [RouteStop!]!
+  timetables: [Timetable!]!
+  id: ID!
+  shortName: String
+  lengthInKm: Int!
 }
 
-union AddTimetableError = TimetableWithThisSettingsAlreadyExists
+input FindTripInput {
+  fromCityId: ID!
+  toCityId: ID!
+  date: Date!
+  numberOfPassengers: Int!
+}
 
-type City implements Node {
+input DateOperationFilterInput {
+  eq: Date
+  neq: Date
+  in: [Date]
+  nin: [Date]
+  gt: Date
+  ngt: Date
+  gte: Date
+  ngte: Date
+  lt: Date
+  nlt: Date
+  lte: Date
+  nlte: Date
+}
+
+type Carrier implements Node {
+  buses("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String): BusesConnection
   id: ID!
   name: String!
 }
 
-input TimetableFilterInput {
-  and: [TimetableFilterInput!]
-  or: [TimetableFilterInput!]
-  id: IntOperationFilterInput
+input TripSeatsFilterInput {
+  and: [TripSeatsFilterInput!]
+  or: [TripSeatsFilterInput!]
+  tripId: IntOperationFilterInput
   routeId: IntOperationFilterInput
-  route: RouteFilterInput
-  timeOfDeparture: TimeSpanOperationFilterInput
-  timeOfArrival: TimeSpanOperationFilterInput
-  dayOfWeek: DayOfWeekOperationFilterInput
-  trips: ListFilterInputTypeOfTripFilterInput
+  sequence: ByteOperationFilterInput
+  routeStop: RouteStopFilterInput
+  availableSeats: ByteOperationFilterInput
 }
-
-"A connection to a list of items."
-type TicketsByUserIdConnection {
-  "Information to aid in pagination."
-  pageInfo: PageInfo!
-  "A list of edges."
-  edges: [TicketsByUserIdEdge!]
-  "A flattened list of the nodes."
-  nodes: [Ticket!]
-  "Identifies the total count of items in the connection."
-  totalCount: Int!
-}
-
-input AddTripInput {
-  busId: ID!
-  timetableId: ID!
-  date: Date!
-  pricePerKm: Decimal!
-}
-
-union RegisterUserError = EmailAlreadyInUseError
-
-type CarrierNotFoundError implements Error {
-  message: String!
-}
-
-type BusUsedInTripError implements Error {
-  message: String!
-}
-
-input AddRouteInput {
-  shortName: String!
-  stops: [RouteStopInput!]!
-}
-
-type RouteAggregatedDataByMonth {
-  route: Route
-  aggregatedData: [TripAggregatedDataByMonth!]
-}
-
-enum DayOfWeek {
-  SUNDAY
-  MONDAY
-  TUESDAY
-  WEDNESDAY
-  THURSDAY
-  FRIDAY
-  SATURDAY
-}
-
-union AddCityError = CityNameAlreadyInUseError
 
 type RegisterUserPayload {
   string: String

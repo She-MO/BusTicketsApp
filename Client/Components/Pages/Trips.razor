@@ -266,7 +266,7 @@
             {
                 Errors.Add(error.Message);
             }
-            foreach (var error in result.Data.AddTrip.Errors ?? Enumerable.Empty<IAddTrip_AddTrip_Errors>())
+            foreach (var error in result.Data?.AddTrip.Errors ?? Enumerable.Empty<IAddTrip_AddTrip_Errors>())
             {
                 if (error is IAddTrip_AddTrip_Errors_TripWithThisSettingsAlreadyExists castedError)
                 {
