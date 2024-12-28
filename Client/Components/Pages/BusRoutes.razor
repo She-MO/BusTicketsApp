@@ -13,9 +13,9 @@
 <PageTitle>Routes</PageTitle>
 
 <MudGrid>
+    <AuthorizeView Policy="IsAdmin">
+        <Authorized Context="authContext">
     <MudItem xs="6">
-        <AuthorizeView Policy="IsAdmin">
-            <Authorized Context="authContext">
                 @foreach (var message in Errors ?? Enumerable.Empty<string>())
                 {
                 <MudAlert Severity="Severity.Error">@message</MudAlert>
@@ -101,8 +101,6 @@
                     </MudCardActions>
                 </MudCard>
                 
-            </Authorized>
-        </AuthorizeView>
     </MudItem>
     <MudItem xs="6">
         <MudDataGrid @ref="dataGrid" T="Route" ServerData="ReloadData" Filterable="false">
@@ -115,8 +113,6 @@
             <Columns>
                 <PropertyColumn Property="x => x.ShortName" Title="Route name"/>
                 <PropertyColumn Property="x => x.RouteStops.Count" Title="Number of stops" Sortable="false"/>
-                <AuthorizeView Policy="IsAdmin">
-                <Authorized Context="authContext">
                     <TemplateColumn CellClass="d-flex justify-end">
                         <CellTemplate>
                             <MudStack Row>
@@ -132,14 +128,35 @@
                             </MudStack>
                         </CellTemplate>
                     </TemplateColumn>
-                </Authorized>
-                </AuthorizeView>
             </Columns>
             <PagerContent>
                 <MudDataGridPager T="Route"/>
             </PagerContent>
         </MudDataGrid>
     </MudItem>
+        </Authorized>
+    </AuthorizeView>
+    <AuthorizeView Policy="IsManager">
+        <Authorized Context="authContext">
+            <MudItem xs="12">
+                <MudDataGrid @ref="dataGrid" T="Route" ServerData="ReloadData" Filterable="false">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Routes</MudText>
+                        <MudSpacer/>
+                        <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </ToolBarContent>
+                    <Columns>
+                        <PropertyColumn Property="x => x.ShortName" Title="Route name"/>
+                        <PropertyColumn Property="x => x.RouteStops.Count" Title="Number of stops" Sortable="false"/>
+                    </Columns>
+                    <PagerContent>
+                        <MudDataGridPager T="Route"/>
+                    </PagerContent>
+                </MudDataGrid>
+            </MudItem>
+        </Authorized>
+    </AuthorizeView>
 </MudGrid>
 @code
 {

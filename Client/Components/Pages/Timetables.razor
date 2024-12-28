@@ -60,11 +60,11 @@
     </ToolBarContent>
     <Columns>
         <HierarchyColumn T="Timetable"/>
-        <PropertyColumn Property="x => x.Route.ShortName" Title="Route name"/>
+        <PropertyColumn Property="x => x.Route.ShortName" Title="Route name" Sortable="false"/>
         <PropertyColumn Property="x => x.TimeOfDeparture" Title="Time of departure"/>
-        <PropertyColumn Property="x => x.TimeOfArrival" Title="Time of arrival"/>
-        <PropertyColumn Property="x => TimeSpan.FromTicks(x.Route.RouteStops.Sum(rs => rs.TimeFromPrevStop.Ticks)).ToString()" Title="Trip duration"/>
-        <PropertyColumn Property="x => x.DayOfWeek.ToString()" Title="Day of week"/>
+        <PropertyColumn Property="x => x.TimeOfArrival" Title="Time of arrival" Sortable="false"/>
+        <PropertyColumn Property="x => TimeSpan.FromTicks(x.Route.RouteStops.Sum(rs => rs.TimeFromPrevStop.Ticks)).ToString()" Title="Trip duration" Sortable="false"/>
+        <PropertyColumn Property="x => x.DayOfWeek.ToString()" Title="Day of week" Sortable="false"/>
         <AuthorizeView Policy="IsManagerOrAdmin">
             <Authorized>
                 <TemplateColumn CellClass="d-flex justify-end">
@@ -128,33 +128,27 @@
         curPage = state.Page;
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         var sortInput = new List<TimetableSortInput>();
-        /*
         if (sortDefinition is null || !sortDefinition.Descending)
         {
             sortInput.Add(new TimetableSortInput()
             {
-                Route = new RouteSortInput()
-                {
-                    ShortName = SortEnumType.Asc
-                }
+                TimeOfDeparture = SortEnumType.Asc
             });
         }
         else
         {
             sortInput.Add(new TimetableSortInput()
             {
-                Route = new RouteSortInput()
-                {
-                    ShortName = SortEnumType.Desc
-                }
+                TimeOfDeparture = SortEnumType.Desc
             });
         }
-        */
+        /*
         sortInput.Add(new TimetableSortInput()
         {
             //DayOfWeek = SortEnumType.Asc,
             TimeOfDeparture = SortEnumType.Asc
         });
+        */
 
         TimetableFilterInput? timetableFilterInput = null;
         if (!String.IsNullOrEmpty(SearchString))

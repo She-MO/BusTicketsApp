@@ -1,4 +1,5 @@
 ﻿@using Client.Auth
+@inject NavigationManager _NavigationManager
 @inject CustomAuthenticationStateProvider _AuthenticationStateProvider
 <MudDialog>
     <TitleContent>
@@ -20,7 +21,8 @@
     {
         await _AuthenticationStateProvider.LogOutAsync();
         MudDialog.Close(DialogResult.Ok(true));
-        StateHasChanged();
+        _NavigationManager.NavigateTo("/");
+        //StateHasChanged();
     }
 
     private void Cancel() => MudDialog.Cancel();

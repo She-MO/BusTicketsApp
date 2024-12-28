@@ -24,7 +24,7 @@ public static class TicketMutations
         var trip = await dbContext.Trips.Where(trip => trip.Id == input.TripId).Include(trip => trip.TripSeats)
             .Include(trip => trip.Timetable).ThenInclude(timetable => timetable.Route)
             .ThenInclude(route => route.RouteStops).FirstAsync(cancellationToken);
-        if ((new DateTime((trip.Date.ToDateTime(new TimeOnly(0))).Ticks + trip.Timetable.TimeOfDeparture.Ticks) - new DateTime((trip.Date.ToDateTime(new TimeOnly(0))).Ticks + trip.Timetable.TimeOfArrival.Ticks)).TotalHours < 1)
+        if ((new DateTime((trip.Date.ToDateTime(new TimeOnly(0))).Ticks + trip.Timetable.TimeOfDeparture.Ticks) - new DateTime(DateTime.Today.Ticks + trip.Timetable.TimeOfArrival.Ticks)).TotalHours < 1)
         {
             throw new CannotBuyTicketsIfLessThanOneHourLeftBeforeTripException();
         }

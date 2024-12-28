@@ -27,7 +27,7 @@ public static class TimetableMutations
             RouteId = input.RouteId,
             DayOfWeek = input.DayOfWeek,
             TimeOfDeparture = input.TimeOfDeparture,
-            TimeOfArrival = TimeOnly.FromTimeSpan(timeOfArrival)
+            TimeOfArrival = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(timeOfArrival.Hours * 60 + timeOfArrival.Minutes))
         };
         dbContext.Timetables.Add(timetable);
         try

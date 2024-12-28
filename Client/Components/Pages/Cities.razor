@@ -51,6 +51,7 @@
             <TemplateColumn CellClass="d-flex justify-end">
                 <CellTemplate>
                     <MudStack Row>
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => DeleteCity(context.Item.Id)">Delete</MudButton>
                         @if (context.Item.Id == CurrentCity)
                         {
                             <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="e => ChooseCity(null, null)">Deselect</MudButton>

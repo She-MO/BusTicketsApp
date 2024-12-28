@@ -2,7 +2,7 @@ mutation RegisterUser($newUser: RegisterUserInput!){
     registerUser(input: $newUser) {
         string
         errors {
-            ... on EmailAlreadyInUseError {
+            ... on Error {
                 message
             }
         }

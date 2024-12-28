@@ -37,7 +37,7 @@ builder.Services.AddAuthorization(options =>
 //builder.Services.AddTransient<RegisterUserInputValidator>();
 builder.Services.AddSingleton<TokenProvider>()
     .AddDbContext<ApplicationDbContext>(
-        options => options.UseNpgsql("Host=127.0.0.1;Username=bus_tickets_app;Password=strong_secret_password"))
+        options => options.UseNpgsql(builder.Configuration["Database:DefaultConnectionString"]!))
     .AddCors(options =>
     {
         options.AddPolicy(name: myAllowSpecificOrigins,

@@ -7,6 +7,10 @@
         Sign in
     </TitleContent>
     <DialogContent>
+        @foreach (var message in Errors ?? Enumerable.Empty<string>())
+        {
+            <MudAlert Severity="Severity.Error">@message</MudAlert>
+        }
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator/>
             <MudGrid>
@@ -35,6 +39,7 @@
 
     private void Cancel() => MudDialog.Cancel();
     RegisterAccountForm model = new RegisterAccountForm();
+    public List<string> Errors = new();
 
     public class RegisterAccountForm
     {
@@ -50,16 +55,21 @@
 
     private async Task OnValidSubmit(EditContext context)
     {
+        Errors.Clear();
         var result = await BusTicketsClient.SignInUser.ExecuteAsync(new LogInUserInput()
         {
             Email = model.Email,
             Password = model.Password,
         });
-        if (result.Data?.LogInUser.String is not null)
+        if (String.IsNullOrEmpty(result.Data?.LogInUser.String))
+        {
+            Errors.Add("Invalid email or password");
+        }
+        else  
         {
             Submit();
             await _AuthenticationStateProvider.LoginAsync(result.Data.LogInUser.String);
-            StateHasChanged();
+            //StateHasChanged();
         }
     }
 }

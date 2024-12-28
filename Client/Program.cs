@@ -36,6 +36,8 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireClaim("Role", "Admin"));
     options.AddPolicy("IsManagerOrAdmin",
         policy => policy.RequireClaim("Role", "Admin", "Manager"));
+    options.AddPolicy("IsManager",
+        policy => policy.RequireClaim("Role", "Manager"));
 });
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();

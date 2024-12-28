@@ -34,12 +34,12 @@
 </EditForm>
 <MudDataGrid @ref="dataGrid" T="Trip" ServerData="ReloadData" Style="margin-top: 50px">
     <Columns>
-        <PropertyColumn Property="x => x.DepartureCity.Name" Title="DepartureCity" />
-        <PropertyColumn Property="x => x.ArrivalCity.Name" Title="ArrivalCity" />
-        <PropertyColumn Property="x => x.DepartureDateTime" Title="Departs at"/>
-        <PropertyColumn Property="x => x.ArrivalDateTime" Title="Arrives at"/>
-        <PropertyColumn Property="x => x.Price"/>
-        <PropertyColumn Property="x => x.NumberOfAvailableSeats" Title="Seats available"/>
+        <PropertyColumn Property="x => x.DepartureCity.Name" Title="DepartureCity" Sortable="false"/>
+        <PropertyColumn Property="x => x.ArrivalCity.Name" Title="ArrivalCity"  Sortable="false"/>
+        <PropertyColumn Property="x => x.DepartureDateTime" Title="Departs at" Sortable="false"/>
+        <PropertyColumn Property="x => x.ArrivalDateTime" Title="Arrives at" Sortable="false"/>
+        <PropertyColumn Property="x => x.Price" Sortable="false"/>
+        <PropertyColumn Property="x => x.NumberOfAvailableSeats" Title="Seats available" Sortable="false"/>
         <AuthorizeView>
             <Authorized Context="authContext">
                 <TemplateColumn CellClass="d-flex justify-end">

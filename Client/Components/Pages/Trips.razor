@@ -47,14 +47,14 @@
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="x => x.Timetable.Route.ShortName" Title="Route name"/>
-        <PropertyColumn Property="x => x.Timetable.TimeOfDeparture" Title="Time of departure"/>
-        <PropertyColumn Property="x => x.Timetable.TimeOfArrival" Title="Time of arrival"/>
+        <PropertyColumn Property="x => x.Timetable.Route.ShortName" Title="Route name" Sortable="false"/>
+        <PropertyColumn Property="x => x.Timetable.TimeOfDeparture" Title="Time of departure" Sortable="false"/>
+        <PropertyColumn Property="x => x.Timetable.TimeOfArrival" Title="Time of arrival" Sortable="false"/>
         <PropertyColumn Property="@(x => x.DepartureDateTime.ToString("d"))" Title="Date"/>
-        <PropertyColumn Property="x => x.PricePerKm" Title="Price per km"/>
-        <PropertyColumn Property="x => x.Bus.BusNumber" Title="Bus number"/>
-        <PropertyColumn Property="x => x.Bus.NumberOfSeats" Title="Number of seats"/>
-        <PropertyColumn Property="x => x.Bus.Carrier.Name" Title="Carrier name"/>
+        <PropertyColumn Property="x => x.PricePerKm" Title="Price per km" Sortable="false"/>
+        <PropertyColumn Property="x => x.Bus.BusNumber" Title="Bus number" Sortable="false"/>
+        <PropertyColumn Property="x => x.Bus.NumberOfSeats" Title="Number of seats" Sortable="false"/>
+        <PropertyColumn Property="x => x.Bus.Carrier.Name" Title="Carrier name" Sortable="false"/>
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>
                 <MudStack Row>

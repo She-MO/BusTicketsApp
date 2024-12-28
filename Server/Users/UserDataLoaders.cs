@@ -32,7 +32,7 @@ public static class UserDataLoaders
         return await dbContext.Tickets
             .AsNoTracking()
             .Where(b => userIds.Contains(b.UserId))
-            .OrderBy(b => b.Id)
+            .OrderByDescending(b => b.Id)
             .Select(b => b.UserId, selector)
             .ToBatchPageAsync(b => b.UserId, pagingArguments, cancellationToken);
     }

@@ -20,12 +20,12 @@
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="x => x.StartCity.Name" Title="From"/>
-        <PropertyColumn Property="x => x.EndCity.Name" Title="To"/>
-        <PropertyColumn Property="x => x.Trip.DepartureDateTime" Title="Date and time of departure"/>
-        <PropertyColumn Property="x => x.Trip.ArrivalDateTime" Title="Date and time of arrival"/>
-        <PropertyColumn Property="x => x.TotalPrice" Title="Price"/>
-        <PropertyColumn Property="x => x.NumberOfPassengers" Title="Number of passengers"/>
+        <PropertyColumn Property="x => x.StartCity.Name" Title="From" Sortable="false"/>
+        <PropertyColumn Property="x => x.EndCity.Name" Title="To" Sortable="false"/>
+        <PropertyColumn Property="x => x.Trip.DepartureDateTime" Title="Date and time of departure" Sortable="false"/>
+        <PropertyColumn Property="x => x.Trip.ArrivalDateTime" Title="Date and time of arrival" Sortable="false"/>
+        <PropertyColumn Property="x => x.TotalPrice" Title="Price" Sortable="false"/>
+        <PropertyColumn Property="x => x.NumberOfPassengers" Title="Number of passengers" Sortable="false"/>
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>
                 <MudStack Row>

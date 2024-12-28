@@ -57,7 +57,7 @@ public static class TripMutations
         ApplicationDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        int result = await dbContext.Timetables.Where(timetable => timetable.Id == input.TripId).ExecuteDeleteAsync(cancellationToken);
+        int result = await dbContext.Trips.Where(trip => trip.Id == input.TripId).ExecuteDeleteAsync(cancellationToken);
         return Convert.ToBoolean(result);
     }
 }
