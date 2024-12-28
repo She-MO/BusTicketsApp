@@ -28,6 +28,8 @@ public static class CustomTokenValidator
         }
 
         var securityToken = tokenHandler.ReadJwtToken(token);
-        return securityToken.Claims.ToList();
+        var claims = securityToken.Claims.ToList();
+        claims.Add(new Claim("jwt", token));
+        return claims;
     }
 }

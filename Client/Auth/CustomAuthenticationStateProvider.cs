@@ -6,19 +6,17 @@ namespace Client.Auth;
 
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
-    private ProtectedSessionStorage _sessionStorage;
+    private ProtectedLocalStorage _localStorage;
     private IConfiguration _configuration;
-    private TokenStorage _tokenStorage;
 
-    public CustomAuthenticationStateProvider(ProtectedSessionStorage sessionStorage, IConfiguration configuration, TokenStorage tokenStorage)
+    public CustomAuthenticationStateProvider(ProtectedLocalStorage localStorage, IConfiguration configuration)
     {
-        _sessionStorage = sessionStorage;
+        _localStorage = localStorage;
         _configuration = configuration;
-        _tokenStorage = tokenStorage;
     }
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        var token = await _sessionStorage.GetAsync<string>("token");
+        var token = await _localStorage.GetAsync<string>("token");
         if (!String.IsNullOrEmpty(token.Value))
         {
             var claims = CustomTokenValidator.ValidateToken(token.Value, _configuration);
@@ -31,15 +29,13 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
     public async Task LoginAsync(string token)
     {
-        await _sessionStorage.SetAsync("token", token);
-        _tokenStorage.Token = token;
+        await _localStorage.SetAsync("token", token);
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 
     public async Task LogOutAsync()
     {
-        _tokenStorage.Token = String.Empty;
-        await _sessionStorage.DeleteAsync("token");
+        await _localStorage.DeleteAsync("token");
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 }

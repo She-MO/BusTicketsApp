@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
+using BusTicketsApp.Client;
 using Client.Auth;
 using Client.Components;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -39,13 +40,21 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("IsManager",
         policy => policy.RequireClaim("Role", "Manager"));
 });
+builder.Services.AddScoped<CircuitServicesAccessor>();
+builder.Services.AddScoped<CircuitHandler, ServicesAccessorCircuitHandler>();
+builder.Services.AddTransient<AuthenticationStateHandler>();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp 
     => sp.GetRequiredService<CustomAuthenticationStateProvider>());
 
-builder.Services.AddSingleton<TokenStorage>();
-builder.Services.AddBusTicketsAppClient()
+builder.Services.AddHttpClient(BusTicketsAppClient.ClientName, options =>
+{
+    options.BaseAddress = new Uri("http://localhost:5085/graphql/");
+})
+    .AddHttpMessageHandler<AuthenticationStateHandler>();
+builder.Services.AddBusTicketsAppClient();
+    /*
     .ConfigureHttpClient((serviceProvider, client) =>
     {
         client.BaseAddress = new Uri("http://localhost:5085/graphql/");
@@ -53,6 +62,7 @@ builder.Services.AddBusTicketsAppClient()
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
     });
+*/
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
