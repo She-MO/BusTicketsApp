@@ -59,7 +59,7 @@ builder.Services.AddSingleton<TokenProvider>()
     .AddSorting()
     .AddServerTypes()
     .AddAuthorization()
-    //.AddProjections()
+    .AddProjections()
     //.AddDataAnnotationsValidator()
     .AddFluentValidation(options =>
     {

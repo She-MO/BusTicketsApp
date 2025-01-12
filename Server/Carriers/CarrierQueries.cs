@@ -9,7 +9,7 @@ namespace BusTicketsApp.Server.Carriers;
 public static class CarrierQueries
 {
     [UsePaging]
-    //[UseProjection]
+    [UseProjection]
     [UseFiltering]
     [UseSorting]
     public static IQueryable<Carrier> GetCarriers(ApplicationDbContext dbContext)

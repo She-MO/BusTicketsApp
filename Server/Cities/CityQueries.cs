@@ -9,7 +9,7 @@ namespace BusTicketsApp.Server.Cities;
 public static class CityQueries
 {
     [UsePaging]
-    //[UseProjection]
+    [UseProjection]
     [UseFiltering]
     [UseSorting]
     public static IQueryable<City> GetCities(ApplicationDbContext dbContext)

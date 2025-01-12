@@ -3,6 +3,7 @@
 public sealed class Timetable
 {
     public int Id { get; init; }
+    [IsProjected(true)]
     public required int RouteId { get; init; }
     public Route? Route { get; set; }
     public required TimeOnly TimeOfDeparture { get; set; }

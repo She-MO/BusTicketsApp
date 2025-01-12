@@ -10,7 +10,7 @@ namespace BusTicketsApp.Server.Routes;
 public static class RouteQueries
 {
     [UsePaging]
-    //[UseProjection]
+    [UseProjection]
     [UseFiltering]
     [UseSorting]
     public static IQueryable<Route> GetRoutes(ApplicationDbContext dbContext)

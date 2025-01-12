@@ -10,7 +10,7 @@ namespace BusTicketsApp.Server.Trips;
 public static class TripQueries
 {
     [UsePaging]
-    //[UseProjection]
+    [UseProjection]
     [UseFiltering]
     [UseSorting]
     public static IQueryable<Trip> GetTrips(ApplicationDbContext dbContext)

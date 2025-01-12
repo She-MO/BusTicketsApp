@@ -3,6 +3,7 @@ namespace BusTicketsApp.Server.Data;
 
 public sealed class Route
 {
+    [IsProjected(true)]
     public int Id { get; init; }
     public string? ShortName { get; set; }
     public int LengthInKm { get; set; }
