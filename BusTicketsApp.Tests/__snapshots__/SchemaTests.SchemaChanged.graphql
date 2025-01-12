@@ -1,0 +1,1051 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+interface Error {
+  message: String!
+}
+
+"The node interface is implemented by entities that have a global unique identifier."
+interface Node {
+  id: ID!
+}
+
+type AddBusPayload {
+  bus: Bus
+  errors: [AddBusError!]
+}
+
+type AddCarrierPayload {
+  carrier: Carrier
+  errors: [AddCarrierError!]
+}
+
+type AddCityPayload {
+  city: City
+  errors: [AddCityError!]
+}
+
+type AddRoutePayload {
+  route: Route
+  errors: [AddRouteError!]
+}
+
+type AddTimetablePayload {
+  timetable: Timetable
+  errors: [AddTimetableError!]
+}
+
+type AddTripPayload {
+  trip: Trip
+  errors: [AddTripError!]
+}
+
+type Bus implements Node {
+  carrier: Carrier @cost(weight: "10")
+  id: ID!
+  numberOfSeats: Int!
+  busNumber: String!
+  carrierId: Int!
+  trips: [Trip!]!
+}
+
+type BusNumberAlreadyInUseError implements Error {
+  message: String!
+}
+
+type BusUsedInTripError implements Error {
+  message: String!
+}
+
+"A connection to a list of items."
+type BusesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [BusesEdge!]
+  "A flattened list of the nodes."
+  nodes: [Bus!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int! @cost(weight: "10")
+}
+
+"An edge in a connection."
+type BusesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Bus!
+}
+
+type BuyTicketPayload {
+  ticket: Ticket
+  errors: [BuyTicketError!]
+}
+
+type CancelTicketPayload {
+  boolean: Boolean
+  errors: [CancelTicketError!]
+}
+
+type CannotBuyTicketsIfLessThanOneHourLeftBeforeTripError implements Error {
+  message: String!
+}
+
+type CannotCancelTicketForTripThatAlreadyHappened implements Error {
+  message: String!
+}
+
+type Carrier implements Node {
+  buses("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String): BusesConnection @listSize(assumedSize: 100, slicingArguments: [ "first", "last" ], sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  id: ID!
+  name: String!
+}
+
+type CarrierAggregatedDataByMonth {
+  carrier: Carrier
+  aggregatedData: [TripAggregatedDataByMonth!]
+}
+
+type CarrierAggregatedDataByYear {
+  carrier: Carrier
+  aggregatedData: [TripAggregatedDataByYear!]
+}
+
+type CarrierNameAlreadyInUseError implements Error {
+  message: String!
+}
+
+type CarrierNotFoundError implements Error {
+  message: String!
+}
+
+"A connection to a list of items."
+type CarriersConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [CarriersEdge!]
+  "A flattened list of the nodes."
+  nodes: [Carrier!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int! @cost(weight: "10")
+}
+
+"An edge in a connection."
+type CarriersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Carrier!
+}
+
+"A connection to a list of items."
+type CitiesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [CitiesEdge!]
+  "A flattened list of the nodes."
+  nodes: [City!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int! @cost(weight: "10")
+}
+
+"An edge in a connection."
+type CitiesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: City!
+}
+
+type City implements Node {
+  id: ID!
+  name: String!
+}
+
+type CityNameAlreadyInUseError implements Error {
+  message: String!
+}
+
+type CityNotFoundError implements Error {
+  message: String!
+}
+
+type CityUsedInRouteError implements Error {
+  message: String!
+}
+
+type EmailAlreadyInUseError implements Error {
+  message: String!
+}
+
+type IncorrectCitySequence implements Error {
+  message: String!
+}
+
+type IncorrectNumberOfSeatsError implements Error {
+  message: String!
+}
+
+type LogInUserPayload {
+  string: String
+}
+
+type Mutation {
+  addBus(input: AddBusInput!): AddBusPayload! @cost(weight: "10")
+  removeBus(input: RemoveBusInput!): RemoveBusPayload! @authorize(policy: "IsManagerOrAdmin") @cost(weight: "10")
+  addCarrier(input: AddCarrierInput!): AddCarrierPayload! @cost(weight: "10")
+  renameCarrier(input: RenameCarrierInput!): RenameCarrierPayload! @cost(weight: "10")
+  removeCarrier(input: RemoveCarrierInput!): RemoveCarrierPayload! @authorize(policy: "IsManagerOrAdmin") @cost(weight: "10")
+  addCity(input: AddCityInput!): AddCityPayload! @cost(weight: "10")
+  renameCity(input: RenameCityInput!): RenameCityPayload! @cost(weight: "10")
+  removeCity(input: RemoveCityInput!): RemoveCityPayload! @authorize(policy: "IsManagerOrAdmin") @cost(weight: "10")
+  addRoute(input: AddRouteInput!): AddRoutePayload! @authorize(policy: "IsAdmin") @cost(weight: "10")
+  removeRoute(input: RemoveRouteInput!): RemoveRoutePayload! @authorize(policy: "IsAdmin") @cost(weight: "10")
+  buyTicket(input: BuyTicketInput!): BuyTicketPayload! @authorize @cost(weight: "10")
+  cancelTicket(input: CancelTicketInput!): CancelTicketPayload! @authorize @cost(weight: "10")
+  addTimetable(input: AddTimetableInput!): AddTimetablePayload! @authorize(policy: "IsManagerOrAdmin") @cost(weight: "10")
+  removeTimetable(input: RemoveTimetableInput!): RemoveTimetablePayload! @authorize(policy: "IsManagerOrAdmin") @cost(weight: "10")
+  addTrip(input: AddTripInput!): AddTripPayload! @authorize(policy: "IsManagerOrAdmin") @cost(weight: "10")
+  removeTrip(input: RemoveTripInput!): RemoveTripPayload! @authorize(policy: "IsManagerOrAdmin") @cost(weight: "10")
+  registerUser(input: RegisterUserInput!): RegisterUserPayload! @cost(weight: "10")
+  logInUser(input: LogInUserInput!): LogInUserPayload! @cost(weight: "10")
+}
+
+type NotEnoughSeatsError implements Error {
+  message: String!
+}
+
+type OneOfCarrierBusesUsedInTripError implements Error {
+  message: String!
+}
+
+type OneOfTheCitiesIsNotPartOfTheRouteError implements Error {
+  message: String!
+}
+
+"Information about pagination in a connection."
+type PageInfo {
+  "Indicates whether more edges exist following the set defined by the clients arguments."
+  hasNextPage: Boolean!
+  "Indicates whether more edges exist prior the set defined by the clients arguments."
+  hasPreviousPage: Boolean!
+  "When paginating backwards, the cursor to continue."
+  startCursor: String
+  "When paginating forwards, the cursor to continue."
+  endCursor: String
+}
+
+type Query {
+  "Fetches an object given its ID."
+  node("ID of the object." id: ID!): Node @cost(weight: "10")
+  "Lookup nodes by a list of IDs."
+  nodes("The list of node IDs." ids: [ID!]!): [Node]! @cost(weight: "10")
+  buses("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: BusFilterInput @cost(weight: "10") order: [BusSortInput!] @cost(weight: "10")): BusesConnection @listSize(assumedSize: 100, slicingArguments: [ "first", "last" ], sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  busById(id: ID!): Bus @cost(weight: "10")
+  busesById(ids: [ID!]!): [Bus!]! @cost(weight: "10")
+  carriers("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: CarrierFilterInput @cost(weight: "10") order: [CarrierSortInput!] @cost(weight: "10")): CarriersConnection @listSize(assumedSize: 100, slicingArguments: [ "first", "last" ], sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  carrierById(id: ID!): Carrier @cost(weight: "10")
+  carriersById(ids: [ID!]!): [Carrier!]! @cost(weight: "10")
+  cities("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: CityFilterInput @cost(weight: "10") order: [CitySortInput!] @cost(weight: "10")): CitiesConnection @listSize(assumedSize: 100, slicingArguments: [ "first", "last" ], sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  cityById(id: ID!): City @cost(weight: "10")
+  citiesById(ids: [ID!]!): [City!]! @cost(weight: "10")
+  tripsDataByMonthsOfYearForOneCarrier(year: Int carrierId: ID!): CarrierAggregatedDataByMonth! @authorize(policy: "IsAdmin") @cost(weight: "10")
+  tripsDataByYearsForOneCarrier(carrierId: ID!): CarrierAggregatedDataByYear! @authorize(policy: "IsAdmin") @cost(weight: "10")
+  tripsDataByMonthsOfYear(year: Int): [TripAggregatedDataByMonth!]! @authorize(policy: "IsAdmin") @cost(weight: "10")
+  tripsDataByYears: [TripAggregatedDataByYear!]! @authorize(policy: "IsAdmin") @cost(weight: "10")
+  tripsDataByMonthsOfYearForOneRoute(year: Int routeId: ID!): RouteAggregatedDataByMonth! @authorize(policy: "IsAdmin") @cost(weight: "10")
+  tripsDataByYearsForOneRoute(routeId: ID!): RouteAggregatedDataByYear! @authorize(policy: "IsAdmin") @cost(weight: "10")
+  tripsDataByMonthsOfYearForOneTimetable(year: Int timetableId: ID!): TimetableAggregatedDataByMonth! @authorize(policy: "IsAdmin") @cost(weight: "10")
+  tripsDataByYearsForOneTimetable(timetableId: ID!): TimetableAggregatedDataByYear! @authorize(policy: "IsAdmin") @cost(weight: "10")
+  routes("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: RouteFilterInput @cost(weight: "10") order: [RouteSortInput!] @cost(weight: "10")): RoutesConnection @listSize(assumedSize: 100, slicingArguments: [ "first", "last" ], sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  routeById(id: ID!): Route @cost(weight: "10")
+  routesById(ids: [ID!]!): [Route!]! @cost(weight: "10")
+  ticketById(id: ID!): Ticket @cost(weight: "10")
+  timetables("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: TimetableFilterInput @cost(weight: "10") order: [TimetableSortInput!] @cost(weight: "10")): TimetablesConnection @listSize(assumedSize: 100, slicingArguments: [ "first", "last" ], sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  timetableById(id: ID!): Timetable @cost(weight: "10")
+  timetablesById(ids: [ID!]!): [Timetable!]! @cost(weight: "10")
+  trips("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: TripFilterInput @cost(weight: "10") order: [TripSortInput!] @cost(weight: "10")): TripsConnection @listSize(assumedSize: 100, slicingArguments: [ "first", "last" ], sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  findTrips(input: FindTripInput!): [Trip!]! @cost(weight: "10")
+  tripById(id: ID!): Trip @cost(weight: "10")
+  tripsById(ids: [ID!]!): [Trip!]! @cost(weight: "10")
+  users("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: UserFilterInput @cost(weight: "10") order: [UserSortInput!] @cost(weight: "10")): UsersConnection @listSize(assumedSize: 100, slicingArguments: [ "first", "last" ], sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  userById(id: ID!): User @cost(weight: "10")
+  usersById(ids: [ID!]!): [User!]! @cost(weight: "10")
+  ticketsByUserId("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String): TicketsByUserIdConnection @listSize(assumedSize: 100, slicingArguments: [ "first", "last" ], sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+}
+
+type RegisterUserPayload {
+  string: String
+  errors: [RegisterUserError!]
+}
+
+type RemoveBusPayload {
+  boolean: Boolean
+  errors: [RemoveBusError!]
+}
+
+type RemoveCarrierPayload {
+  boolean: Boolean
+  errors: [RemoveCarrierError!]
+}
+
+type RemoveCityPayload {
+  boolean: Boolean
+  errors: [RemoveCityError!]
+}
+
+type RemoveRoutePayload {
+  boolean: Boolean
+  errors: [RemoveRouteError!]
+}
+
+type RemoveTimetablePayload {
+  boolean: Boolean
+  errors: [RemoveTimetableError!]
+}
+
+type RemoveTripPayload {
+  boolean: Boolean
+}
+
+type RenameCarrierPayload {
+  carrier: Carrier
+  errors: [RenameCarrierError!]
+}
+
+type RenameCityPayload {
+  city: City
+  errors: [RenameCityError!]
+}
+
+type Route implements Node {
+  routeStops: [RouteStop!]! @cost(weight: "10")
+  timetables: [Timetable!]! @cost(weight: "10")
+  id: ID!
+  shortName: String
+  lengthInKm: Int!
+}
+
+type RouteAggregatedDataByMonth {
+  route: Route
+  aggregatedData: [TripAggregatedDataByMonth!]
+}
+
+type RouteAggregatedDataByYear {
+  route: Route
+  aggregatedData: [TripAggregatedDataByYear!]
+}
+
+type RouteIsUsedInTimetableError implements Error {
+  message: String!
+}
+
+type RouteNameIsAlreadyInUseError implements Error {
+  message: String!
+}
+
+type RouteStop {
+  city: City @cost(weight: "10")
+  route: Route @cost(weight: "10")
+  routeId: ID!
+  cityId: ID!
+  sequence: Byte!
+  timeFromPrevStop: TimeSpan!
+  kmFromPrevStop: Int!
+  tripSeats: [TripSeats!]!
+}
+
+"A connection to a list of items."
+type RoutesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [RoutesEdge!]
+  "A flattened list of the nodes."
+  nodes: [Route!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int! @cost(weight: "10")
+}
+
+"An edge in a connection."
+type RoutesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Route!
+}
+
+type Ticket implements Node {
+  user: User @cost(weight: "10")
+  trip: Trip @cost(weight: "10")
+  userId: ID!
+  id: ID!
+  numberOfPassengers: Byte!
+  tripId: Int!
+  startCityId: Int!
+  startCity: City
+  endCityId: Int!
+  endCity: City
+  totalPrice: Decimal!
+}
+
+"A connection to a list of items."
+type TicketsByUserIdConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [TicketsByUserIdEdge!]
+  "A flattened list of the nodes."
+  nodes: [Ticket!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int! @cost(weight: "10")
+}
+
+"An edge in a connection."
+type TicketsByUserIdEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Ticket!
+}
+
+type Timetable implements Node {
+  route: Route @cost(weight: "10")
+  routeId: ID!
+  id: ID!
+  timeOfDeparture: TimeSpan!
+  timeOfArrival: TimeSpan!
+  dayOfWeek: DayOfWeek!
+  trips: [Trip!]!
+}
+
+type TimetableAggregatedDataByMonth {
+  timetable: Timetable
+  aggregatedData: [TripAggregatedDataByMonth!]
+}
+
+type TimetableAggregatedDataByYear {
+  timetable: Timetable
+  aggregatedData: [TripAggregatedDataByYear!]
+}
+
+type TimetableUsedInTripError implements Error {
+  message: String!
+}
+
+type TimetableWithThisSettingsAlreadyExists implements Error {
+  message: String!
+}
+
+"A connection to a list of items."
+type TimetablesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [TimetablesEdge!]
+  "A flattened list of the nodes."
+  nodes: [Timetable!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int! @cost(weight: "10")
+}
+
+"An edge in a connection."
+type TimetablesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Timetable!
+}
+
+type Trip implements Node {
+  timetable: Timetable @cost(weight: "10")
+  bus: Bus @cost(weight: "10")
+  tickets: [Ticket!]! @cost(weight: "10")
+  tripSeats: [TripSeats!]! @cost(weight: "10")
+  busId: ID!
+  timetableId: ID!
+  id: ID!
+  date: Date!
+  pricePerKm: Decimal!
+}
+
+type TripAggregatedDataByMonth {
+  month: Int!
+  numberOfTickets: Int!
+  numberOfTrips: Int!
+  numberOfPassengers: Int!
+  totalIncome: Decimal!
+  averagePrice: Decimal!
+}
+
+type TripAggregatedDataByYear {
+  year: Int!
+  numberOfTickets: Int!
+  numberOfTrips: Int!
+  numberOfPassengers: Int!
+  totalIncome: Decimal!
+  averagePrice: Decimal!
+}
+
+type TripSeats {
+  tripId: Int!
+  routeId: Int!
+  sequence: Byte!
+  routeStop: RouteStop
+  availableSeats: Byte!
+}
+
+type TripWithThisSettingsAlreadyExists implements Error {
+  message: String!
+}
+
+"A connection to a list of items."
+type TripsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [TripsEdge!]
+  "A flattened list of the nodes."
+  nodes: [Trip!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int! @cost(weight: "10")
+}
+
+"An edge in a connection."
+type TripsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Trip!
+}
+
+type User implements Node {
+  id: ID!
+  email: String!
+  password: String!
+  phone: String
+  role: Roles!
+  tickets: [Ticket!]!
+}
+
+type UserIsNotAuthorizedToCancelTicketError implements Error {
+  message: String!
+}
+
+"A connection to a list of items."
+type UsersConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [UsersEdge!]
+  "A flattened list of the nodes."
+  nodes: [User!]
+  "Identifies the total count of items in the connection."
+  totalCount: Int! @cost(weight: "10")
+}
+
+"An edge in a connection."
+type UsersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: User!
+}
+
+union AddBusError = IncorrectNumberOfSeatsError | BusNumberAlreadyInUseError
+
+union AddCarrierError = CarrierNameAlreadyInUseError
+
+union AddCityError = CityNameAlreadyInUseError
+
+union AddRouteError = RouteNameIsAlreadyInUseError
+
+union AddTimetableError = TimetableWithThisSettingsAlreadyExists
+
+union AddTripError = TripWithThisSettingsAlreadyExists
+
+union BuyTicketError = OneOfTheCitiesIsNotPartOfTheRouteError | IncorrectCitySequence | NotEnoughSeatsError | CannotBuyTicketsIfLessThanOneHourLeftBeforeTripError
+
+union CancelTicketError = UserIsNotAuthorizedToCancelTicketError | CannotCancelTicketForTripThatAlreadyHappened
+
+union RegisterUserError = EmailAlreadyInUseError
+
+union RemoveBusError = BusUsedInTripError
+
+union RemoveCarrierError = OneOfCarrierBusesUsedInTripError
+
+union RemoveCityError = CityUsedInRouteError
+
+union RemoveRouteError = RouteIsUsedInTimetableError
+
+union RemoveTimetableError = TimetableUsedInTripError
+
+union RenameCarrierError = CarrierNotFoundError | CarrierNameAlreadyInUseError
+
+union RenameCityError = CityNotFoundError | CityNameAlreadyInUseError
+
+input AddBusInput {
+  busNumber: String!
+  numberOfSeats: Int!
+  carrierId: ID!
+}
+
+input AddCarrierInput {
+  name: String!
+}
+
+input AddCityInput {
+  name: String!
+}
+
+input AddRouteInput {
+  shortName: String!
+  stops: [RouteStopInput!]!
+}
+
+input AddTimetableInput {
+  routeId: ID!
+  timeOfDeparture: TimeSpan!
+  dayOfWeek: DayOfWeek!
+}
+
+input AddTripInput {
+  busId: ID!
+  timetableId: ID!
+  date: Date!
+  pricePerKm: Decimal!
+}
+
+input BusFilterInput {
+  and: [BusFilterInput!]
+  or: [BusFilterInput!]
+  id: IntOperationFilterInput
+  numberOfSeats: IntOperationFilterInput
+  busNumber: StringOperationFilterInput
+  carrierId: IntOperationFilterInput
+  carrier: CarrierFilterInput
+  trips: ListFilterInputTypeOfTripFilterInput
+}
+
+input BusSortInput {
+  id: SortEnumType @cost(weight: "10")
+  numberOfSeats: SortEnumType @cost(weight: "10")
+  busNumber: SortEnumType @cost(weight: "10")
+  carrierId: SortEnumType @cost(weight: "10")
+  carrier: CarrierSortInput @cost(weight: "10")
+}
+
+input BuyTicketInput {
+  tripId: ID!
+  fromCityId: ID!
+  toCityId: ID!
+  numberOfPassengers: Int!
+}
+
+input ByteOperationFilterInput {
+  eq: Byte @cost(weight: "10")
+  neq: Byte @cost(weight: "10")
+  in: [Byte] @cost(weight: "10")
+  nin: [Byte] @cost(weight: "10")
+  gt: Byte @cost(weight: "10")
+  ngt: Byte @cost(weight: "10")
+  gte: Byte @cost(weight: "10")
+  ngte: Byte @cost(weight: "10")
+  lt: Byte @cost(weight: "10")
+  nlt: Byte @cost(weight: "10")
+  lte: Byte @cost(weight: "10")
+  nlte: Byte @cost(weight: "10")
+}
+
+input CancelTicketInput {
+  id: ID!
+}
+
+input CarrierFilterInput {
+  and: [CarrierFilterInput!]
+  or: [CarrierFilterInput!]
+  id: IntOperationFilterInput
+  name: StringOperationFilterInput
+  buses: ListFilterInputTypeOfBusFilterInput
+}
+
+input CarrierSortInput {
+  id: SortEnumType @cost(weight: "10")
+  name: SortEnumType @cost(weight: "10")
+}
+
+input CityFilterInput {
+  and: [CityFilterInput!]
+  or: [CityFilterInput!]
+  id: IntOperationFilterInput
+  name: StringOperationFilterInput
+}
+
+input CitySortInput {
+  id: SortEnumType @cost(weight: "10")
+  name: SortEnumType @cost(weight: "10")
+}
+
+input DateOperationFilterInput {
+  eq: Date @cost(weight: "10")
+  neq: Date @cost(weight: "10")
+  in: [Date] @cost(weight: "10")
+  nin: [Date] @cost(weight: "10")
+  gt: Date @cost(weight: "10")
+  ngt: Date @cost(weight: "10")
+  gte: Date @cost(weight: "10")
+  ngte: Date @cost(weight: "10")
+  lt: Date @cost(weight: "10")
+  nlt: Date @cost(weight: "10")
+  lte: Date @cost(weight: "10")
+  nlte: Date @cost(weight: "10")
+}
+
+input DayOfWeekOperationFilterInput {
+  eq: DayOfWeek @cost(weight: "10")
+  neq: DayOfWeek @cost(weight: "10")
+  in: [DayOfWeek!] @cost(weight: "10")
+  nin: [DayOfWeek!] @cost(weight: "10")
+}
+
+input DecimalOperationFilterInput {
+  eq: Decimal @cost(weight: "10")
+  neq: Decimal @cost(weight: "10")
+  in: [Decimal] @cost(weight: "10")
+  nin: [Decimal] @cost(weight: "10")
+  gt: Decimal @cost(weight: "10")
+  ngt: Decimal @cost(weight: "10")
+  gte: Decimal @cost(weight: "10")
+  ngte: Decimal @cost(weight: "10")
+  lt: Decimal @cost(weight: "10")
+  nlt: Decimal @cost(weight: "10")
+  lte: Decimal @cost(weight: "10")
+  nlte: Decimal @cost(weight: "10")
+}
+
+input FindTripInput {
+  fromCityId: ID!
+  toCityId: ID!
+  date: Date!
+  numberOfPassengers: Int!
+}
+
+input IntOperationFilterInput {
+  eq: Int @cost(weight: "10")
+  neq: Int @cost(weight: "10")
+  in: [Int] @cost(weight: "10")
+  nin: [Int] @cost(weight: "10")
+  gt: Int @cost(weight: "10")
+  ngt: Int @cost(weight: "10")
+  gte: Int @cost(weight: "10")
+  ngte: Int @cost(weight: "10")
+  lt: Int @cost(weight: "10")
+  nlt: Int @cost(weight: "10")
+  lte: Int @cost(weight: "10")
+  nlte: Int @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfBusFilterInput {
+  all: BusFilterInput @cost(weight: "10")
+  none: BusFilterInput @cost(weight: "10")
+  some: BusFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfRouteStopFilterInput {
+  all: RouteStopFilterInput @cost(weight: "10")
+  none: RouteStopFilterInput @cost(weight: "10")
+  some: RouteStopFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfTicketFilterInput {
+  all: TicketFilterInput @cost(weight: "10")
+  none: TicketFilterInput @cost(weight: "10")
+  some: TicketFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfTimetableFilterInput {
+  all: TimetableFilterInput @cost(weight: "10")
+  none: TimetableFilterInput @cost(weight: "10")
+  some: TimetableFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfTripFilterInput {
+  all: TripFilterInput @cost(weight: "10")
+  none: TripFilterInput @cost(weight: "10")
+  some: TripFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfTripSeatsFilterInput {
+  all: TripSeatsFilterInput @cost(weight: "10")
+  none: TripSeatsFilterInput @cost(weight: "10")
+  some: TripSeatsFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+}
+
+input LogInUserInput {
+  email: String!
+  password: String!
+}
+
+input RegisterUserInput {
+  email: String!
+  password: String!
+  phone: String!
+}
+
+input RemoveBusInput {
+  id: ID!
+}
+
+input RemoveCarrierInput {
+  id: ID!
+}
+
+input RemoveCityInput {
+  id: ID!
+}
+
+input RemoveRouteInput {
+  id: ID!
+}
+
+input RemoveTimetableInput {
+  id: ID!
+}
+
+input RemoveTripInput {
+  tripId: ID!
+}
+
+input RenameCarrierInput {
+  id: ID!
+  name: String!
+}
+
+input RenameCityInput {
+  id: ID!
+  name: String!
+}
+
+input RolesOperationFilterInput {
+  eq: Roles @cost(weight: "10")
+  neq: Roles @cost(weight: "10")
+  in: [Roles!] @cost(weight: "10")
+  nin: [Roles!] @cost(weight: "10")
+}
+
+input RouteFilterInput {
+  and: [RouteFilterInput!]
+  or: [RouteFilterInput!]
+  id: IntOperationFilterInput
+  shortName: StringOperationFilterInput
+  lengthInKm: IntOperationFilterInput
+  routeStops: ListFilterInputTypeOfRouteStopFilterInput
+  timetables: ListFilterInputTypeOfTimetableFilterInput
+}
+
+input RouteSortInput {
+  id: SortEnumType @cost(weight: "10")
+  shortName: SortEnumType @cost(weight: "10")
+  lengthInKm: SortEnumType @cost(weight: "10")
+}
+
+input RouteStopFilterInput {
+  and: [RouteStopFilterInput!]
+  or: [RouteStopFilterInput!]
+  routeId: IntOperationFilterInput
+  route: RouteFilterInput
+  cityId: IntOperationFilterInput
+  city: CityFilterInput
+  sequence: ByteOperationFilterInput
+  timeFromPrevStop: TimeSpanOperationFilterInput
+  kmFromPrevStop: IntOperationFilterInput
+  tripSeats: ListFilterInputTypeOfTripSeatsFilterInput
+}
+
+input RouteStopInput {
+  cityId: ID!
+  timeFromPrevStop: TimeSpan!
+  kmFromPrevStop: Int!
+}
+
+input StringOperationFilterInput {
+  and: [StringOperationFilterInput!]
+  or: [StringOperationFilterInput!]
+  eq: String @cost(weight: "10")
+  neq: String @cost(weight: "10")
+  contains: String @cost(weight: "20")
+  ncontains: String @cost(weight: "20")
+  in: [String] @cost(weight: "10")
+  nin: [String] @cost(weight: "10")
+  startsWith: String @cost(weight: "20")
+  nstartsWith: String @cost(weight: "20")
+  endsWith: String @cost(weight: "20")
+  nendsWith: String @cost(weight: "20")
+}
+
+input TicketFilterInput {
+  and: [TicketFilterInput!]
+  or: [TicketFilterInput!]
+  id: IntOperationFilterInput
+  numberOfPassengers: ByteOperationFilterInput
+  tripId: IntOperationFilterInput
+  trip: TripFilterInput
+  userId: IntOperationFilterInput
+  user: UserFilterInput
+  startCityId: IntOperationFilterInput
+  startCity: CityFilterInput
+  endCityId: IntOperationFilterInput
+  endCity: CityFilterInput
+  totalPrice: DecimalOperationFilterInput
+}
+
+input TimeSpanOperationFilterInput {
+  eq: TimeSpan @cost(weight: "10")
+  neq: TimeSpan @cost(weight: "10")
+  in: [TimeSpan] @cost(weight: "10")
+  nin: [TimeSpan] @cost(weight: "10")
+  gt: TimeSpan @cost(weight: "10")
+  ngt: TimeSpan @cost(weight: "10")
+  gte: TimeSpan @cost(weight: "10")
+  ngte: TimeSpan @cost(weight: "10")
+  lt: TimeSpan @cost(weight: "10")
+  nlt: TimeSpan @cost(weight: "10")
+  lte: TimeSpan @cost(weight: "10")
+  nlte: TimeSpan @cost(weight: "10")
+}
+
+input TimetableFilterInput {
+  and: [TimetableFilterInput!]
+  or: [TimetableFilterInput!]
+  id: IntOperationFilterInput
+  routeId: IntOperationFilterInput
+  route: RouteFilterInput
+  timeOfDeparture: TimeSpanOperationFilterInput
+  timeOfArrival: TimeSpanOperationFilterInput
+  dayOfWeek: DayOfWeekOperationFilterInput
+  trips: ListFilterInputTypeOfTripFilterInput
+}
+
+input TimetableSortInput {
+  id: SortEnumType @cost(weight: "10")
+  routeId: SortEnumType @cost(weight: "10")
+  route: RouteSortInput @cost(weight: "10")
+  timeOfDeparture: SortEnumType @cost(weight: "10")
+  timeOfArrival: SortEnumType @cost(weight: "10")
+  dayOfWeek: SortEnumType @cost(weight: "10")
+}
+
+input TripFilterInput {
+  and: [TripFilterInput!]
+  or: [TripFilterInput!]
+  id: IntOperationFilterInput
+  busId: IntOperationFilterInput
+  bus: BusFilterInput
+  timetableId: IntOperationFilterInput
+  timetable: TimetableFilterInput
+  date: DateOperationFilterInput
+  pricePerKm: DecimalOperationFilterInput
+  tickets: ListFilterInputTypeOfTicketFilterInput
+  tripSeats: ListFilterInputTypeOfTripSeatsFilterInput
+}
+
+input TripSeatsFilterInput {
+  and: [TripSeatsFilterInput!]
+  or: [TripSeatsFilterInput!]
+  tripId: IntOperationFilterInput
+  routeId: IntOperationFilterInput
+  sequence: ByteOperationFilterInput
+  routeStop: RouteStopFilterInput
+  availableSeats: ByteOperationFilterInput
+}
+
+input TripSortInput {
+  id: SortEnumType @cost(weight: "10")
+  busId: SortEnumType @cost(weight: "10")
+  bus: BusSortInput @cost(weight: "10")
+  timetableId: SortEnumType @cost(weight: "10")
+  timetable: TimetableSortInput @cost(weight: "10")
+  date: SortEnumType @cost(weight: "10")
+  pricePerKm: SortEnumType @cost(weight: "10")
+}
+
+input UserFilterInput {
+  and: [UserFilterInput!]
+  or: [UserFilterInput!]
+  id: IntOperationFilterInput
+  email: StringOperationFilterInput
+  password: StringOperationFilterInput
+  phone: StringOperationFilterInput
+  role: RolesOperationFilterInput
+  tickets: ListFilterInputTypeOfTicketFilterInput
+}
+
+input UserSortInput {
+  id: SortEnumType @cost(weight: "10")
+  email: SortEnumType @cost(weight: "10")
+  password: SortEnumType @cost(weight: "10")
+  phone: SortEnumType @cost(weight: "10")
+  role: SortEnumType @cost(weight: "10")
+}
+
+"Defines when a policy shall be executed."
+enum ApplyPolicy {
+  "Before the resolver was executed."
+  BEFORE_RESOLVER
+  "After the resolver was executed."
+  AFTER_RESOLVER
+  "The policy is applied in the validation step before the execution."
+  VALIDATION
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum Roles {
+  USER
+  MANAGER
+  ADMIN
+}
+
+enum SortEnumType {
+  ASC
+  DESC
+}
+
+"The authorize directive."
+directive @authorize("The name of the authorization policy that determines access to the annotated resource." policy: String "Roles that are allowed to access the annotated resource." roles: [String!] "Defines when when the authorize directive shall be applied.By default the authorize directives are applied during the validation phase." apply: ApplyPolicy! = BEFORE_RESOLVER) repeatable on OBJECT | FIELD_DEFINITION
+
+"The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response."
+directive @cost("The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc." weight: String!) on SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM | INPUT_FIELD_DEFINITION
+
+"The purpose of the `@listSize` directive is to either inform the static analysis about the size of returned lists (if that information is statically available), or to point the analysis to where to find that information."
+directive @listSize("The `assumedSize` argument can be used to statically define the maximum length of a list returned by a field." assumedSize: Int "The `slicingArguments` argument can be used to define which of the field's arguments with numeric type are slicing arguments, so that their value determines the size of the list returned by that field. It may specify a list of multiple slicing arguments." slicingArguments: [String!] "The `sizedFields` argument can be used to define that the value of the `assumedSize` argument or of a slicing argument does not affect the size of a list returned by a field itself, but that of a list returned by one of its sub-fields." sizedFields: [String!] "The `requireOneSlicingArgument` argument can be used to inform the static analysis that it should expect that exactly one of the defined slicing arguments is present in a query. If that is not the case (i.e., if none or multiple slicing arguments are present), the static analysis may throw an error." requireOneSlicingArgument: Boolean! = true) on FIELD_DEFINITION
+
+"The `Byte` scalar type represents non-fractional whole numeric values. Byte can represent values between 0 and 255."
+scalar Byte
+
+"The `Date` scalar represents an ISO-8601 compliant date type."
+scalar Date
+
+"The `Decimal` scalar type represents a decimal floating-point number."
+scalar Decimal
+
+"The `TimeSpan` scalar represents an ISO-8601 compliant duration type."
+scalar TimeSpan
