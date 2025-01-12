@@ -38,4 +38,9 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         await _localStorage.DeleteAsync("token");
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
+
+    public async Task<string> GetTokenAsync()
+    {
+        return (await _localStorage.GetAsync<string>("token")).Value ?? string.Empty;
+    }
 }

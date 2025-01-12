@@ -12,16 +12,12 @@ public class AuthenticationStateHandler(
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var authStateProvider = circuitServicesAccessor.Services
-            .GetRequiredService<AuthenticationStateProvider>();
-        var authState = await authStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+            .GetRequiredService<CustomAuthenticationStateProvider>();
+        var token = await authStateProvider.GetTokenAsync();
 
-        if (user.Identity is not null && user.Identity.IsAuthenticated)
-        {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.FindFirstValue("jwt") ?? "");
-            //request.Headers.Add("Bearer", user.FindFirstValue("jwt") ?? "");
-        }
-
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        //request.Headers.Add("Bearer", user.FindFirstValue("jwt") ?? "");
+            
         return await base.SendAsync(request, cancellationToken);
     }
 }
