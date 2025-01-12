@@ -34,7 +34,7 @@ public class CarrierDataLoaders
             .AsNoTracking()
             .Where(b => carrierIds.Contains(b.CarrierId))
             .OrderBy(b => b.Id)
-            .Select(b => b.Id, selector)
+            .Select(b => b.CarrierId, selector)
             .ToBatchPageAsync(b => b.CarrierId, pagingArguments, cancellationToken);
     }
 }
